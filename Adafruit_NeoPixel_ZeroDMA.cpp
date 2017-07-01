@@ -15,31 +15,62 @@ Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(void) :
 
 Adafruit_NeoPixel_ZeroDMA::~Adafruit_NeoPixel_ZeroDMA() {
   dma.abort();
-  if(spi)    spi->endTransaction();
+  if(spi) {
+    spi->endTransaction();
+    if(spi != &SPI) delete spi;
+  }
   if(dmaBuf) free(dmaBuf);
 }
 
-#define DMA_SERCOM SERCOM1
-#define DMA_SERCOM_DMAC_ID_TX SERCOM1_DMAC_ID_TX
+struct {
+  SERCOM        *sercom;
+  Sercom        *sercomBase;
+  uint8_t        dmacID, mosi, miso, sck;
+  SercomSpiTXPad padTX;
+  SercomRXPad    padRX;
+  EPioType       pinFunc;
+} sercomTable[] = {
+#ifdef ADAFRUIT_CIRCUITPLAYGROUND_M0
+  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,  8, A5, A4, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_0, PIO_SERCOM_ALT,
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX, A2, A9, A3, SPI_PAD_2_SCK_3, SERCOM_RX_PAD_1, PIO_SERCOM_ALT,
+  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX, A7,  5, A6, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
+#else
+  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,  5,  3,  2, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_1, PIO_SERCOM,
+  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, 11, 12, 13, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_3, PIO_SERCOM,
+  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX, 23, 22, 24, SPI_PAD_2_SCK_3, SERCOM_RX_PAD_0, PIO_SERCOM_ALT,
+  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX, A5,  6,  7, SPI_PAD_0_SCK_3, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
+#endif
+};
+#define N_SERCOMS (sizeof(sercomTable) / sizeof(sercomTable[0]))
+
 boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
+
+  uint8_t i;
+  for(i=0; (i<N_SERCOMS) && (sercomTable[i].mosi != pin); i++);
+  if(i >= N_SERCOMS) return false; // Invalid pin
+
   Adafruit_NeoPixel::begin(); // Call base class begin() function 1st
+  // TO DO: Check for successful malloc in base class here
+
   uint8_t  bytesPerPixel = (wOffset = rOffset) ? 3 : 4;
   uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
   if((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
-    if((spi = new SPIClass(&sercom1, 12, 13, 11,
-      SPI_PAD_0_SCK_1, SERCOM_RX_PAD_3))) {
+    spi = (pin == 23) ? &SPI : new SPIClass(sercomTable[i].sercom,
+      sercomTable[i].miso, sercomTable[i].sck, sercomTable[i].mosi,
+      sercomTable[i].padTX, sercomTable[i].padRX);
+    if((spi)) {
       spi->begin();
-      pinPeripheral(11, PIO_SERCOM);
-      dma.configure_peripheraltrigger(DMA_SERCOM_DMAC_ID_TX);
+      pinPeripheral(sercomTable[i].mosi, sercomTable[i].pinFunc);
+      dma.configure_peripheraltrigger(sercomTable[i].dmacID);
       dma.configure_triggeraction(DMA_TRIGGER_ACTON_BEAT);
       if(STATUS_OK == dma.allocate()) {
         dma.setup_transfer_descriptor(
-          dmaBuf,                              // move data from here
-          (void *)(&DMA_SERCOM->SPI.DATA.reg), // to here
-          bytesTotal,                          // this many...
-          DMA_BEAT_SIZE_BYTE,                  // bytes/hword/words
-          true,                                // increment source addr?
-          false);                              // increment dest addr?
+          dmaBuf,             // move data from here
+          (void *)(&sercomTable[i].sercomBase->SPI.DATA.reg), // to here
+          bytesTotal,         // this many...
+          DMA_BEAT_SIZE_BYTE, // bytes/hword/words
+          true,               // increment source addr?
+          false);             // increment dest addr?
         if(STATUS_OK == dma.add_descriptor()) {
           dma.loop(true); // DMA transaction loops forever! Latch is built in.
           memset(dmaBuf, 0, bytesTotal); // IMPORTANT - clears latch data at end
@@ -53,7 +84,7 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
         }
         dma.free();
       }
-      delete spi;
+      if(spi != &SPI) delete spi;
       spi = NULL;
     }
     free(dmaBuf);
@@ -94,7 +125,6 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
 void Adafruit_NeoPixel_ZeroDMA::setBrightness(uint8_t b) {
   brightness = (uint16_t)b + 1;
 }
-
 
 uint8_t Adafruit_NeoPixel_ZeroDMA::getBrightness(void) const {
   return brightness - 1;

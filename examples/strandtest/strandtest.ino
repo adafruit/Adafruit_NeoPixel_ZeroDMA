@@ -1,107 +1,47 @@
-// THIS IS FOR M0 BOARDS ONLY
+// This is a PARED-DOWN NeoPixel example for the Adafruit_NeoPixel_ZeroDMA
+// library, demonstrating pin declarations, etc.  For more complete examples
+// of NeoPixel operations, see the examples included with the 'regular'
+// Adafruit_NeoPixel library.
 
 #include <Adafruit_NeoPixel_ZeroDMA.h>
 
-#define PIN 6
+// DMA NeoPixels work ONLY on SPECIFIC PINS.
+// On Circuit Playground Express: 8, A2 and A7 (TX) are valid.
+// On Feather M0, Arduino Zero, etc.: 5, 11, A5 and 23 (SPI MOSI).
+#define PIN        8
+#define NUM_PIXELS 10
 
-// Parameter 1 = number of pixels in strip
-// Parameter 2 = Arduino pin number (limited selection)
-// Parameter 3 = pixel type: NEO_GRB (most), NEO_RGBW, etc.
-Adafruit_NeoPixel_ZeroDMA strip(60, PIN, NEO_GRB);
-
-// IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
-// pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
-// and minimize distance between Arduino and first pixel.  Avoid connecting
-// on a live circuit...if you must, connect GND first.
+Adafruit_NeoPixel_ZeroDMA strip(NUM_PIXELS, PIN, NEO_GRB);
 
 void setup() {
   strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
+  strip.setBrightness(32);
+  strip.show();
 }
 
 void loop() {
-  // Some example procedures showing how to display to the pixels:
-  colorWipe(strip.Color(255, 0, 0), 50); // Red
-  colorWipe(strip.Color(0, 255, 0), 50); // Green
-  colorWipe(strip.Color(0, 0, 255), 50); // Blue
-//colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW
-  // Send a theater pixel chase in...
-  theaterChase(strip.Color(127, 127, 127), 50); // White
-  theaterChase(strip.Color(127, 0, 0), 50); // Red
-  theaterChase(strip.Color(0, 0, 127), 50); // Blue
+  uint16_t i;
 
-  rainbow(20);
-  rainbowCycle(20);
-  theaterChaseRainbow(50);
-}
-
-// Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait) {
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-    strip.setPixelColor(i, c);
-    strip.show();
-    delay(wait);
-  }
-}
-
-void rainbow(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256; j++) {
+  // 'Color wipe' across all pixels
+  for(uint32_t c = 0xFF0000; c; c >>= 8) { // Red, green, blue
     for(i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel((i+j) & 255));
+      strip.setPixelColor(i, c);
+      strip.show();
+      delay(50);
+    }
+  }
+
+  // Rainbow cycle
+  uint32_t elapsed, t, startTime = micros();
+  for(;;) {
+    t       = micros();
+    elapsed = t - startTime;
+    if(elapsed > 5000000) break; // Run for 5 seconds
+    for(i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, Wheel((uint8_t)(
+        (elapsed * 256 / 1000000) + i * 256 / strip.numPixels())));
     }
     strip.show();
-    delay(wait);
-  }
-}
-
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-    for(i=0; i< strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-    }
-    strip.show();
-    delay(wait);
-  }
-}
-
-//Theatre-style crawling lights.
-void theaterChase(uint32_t c, uint8_t wait) {
-  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
-    for (int q=0; q < 3; q++) {
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, c);    //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
-      }
-    }
-  }
-}
-
-//Theatre-style crawling lights with rainbow effect
-void theaterChaseRainbow(uint8_t wait) {
-  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
-    for (int q=0; q < 3; q++) {
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
-      }
-    }
   }
 }
 
