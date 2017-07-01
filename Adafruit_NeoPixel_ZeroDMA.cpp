@@ -17,7 +17,9 @@ Adafruit_NeoPixel_ZeroDMA::~Adafruit_NeoPixel_ZeroDMA() {
   dma.abort();
   if(spi) {
     spi->endTransaction();
+#ifdef SPI
     if(spi != &SPI) delete spi;
+#endif
   }
   if(dmaBuf) free(dmaBuf);
 }
@@ -30,6 +32,9 @@ struct {
   SercomRXPad    padRX;
   EPioType       pinFunc;
 } sercomTable[] = {
+#ifdef ARDUINO_GEMMA_M0
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,  0, 14,  2, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
+#else
 #ifdef ADAFRUIT_CIRCUITPLAYGROUND_M0
   &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,  8, A5, A4, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_0, PIO_SERCOM_ALT,
   &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX, A2, A9, A3, SPI_PAD_2_SCK_3, SERCOM_RX_PAD_1, PIO_SERCOM_ALT,
@@ -39,7 +44,8 @@ struct {
   &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, 11, 12, 13, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_3, PIO_SERCOM,
   &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX, 23, 22, 24, SPI_PAD_2_SCK_3, SERCOM_RX_PAD_0, PIO_SERCOM_ALT,
   &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX, A5,  6,  7, SPI_PAD_0_SCK_3, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
-#endif
+#endif // end not ADAFRUIT_CIRCUITPLAYGROUND_M0
+#endif // end not ARDUINO_GEMMA_M0
 };
 #define N_SERCOMS (sizeof(sercomTable) / sizeof(sercomTable[0]))
 
@@ -55,9 +61,14 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
   uint8_t  bytesPerPixel = (wOffset = rOffset) ? 3 : 4;
   uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
   if((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
-    spi = (pin == 23) ? &SPI : new SPIClass(sercomTable[i].sercom,
-      sercomTable[i].miso, sercomTable[i].sck, sercomTable[i].mosi,
-      sercomTable[i].padTX, sercomTable[i].padRX);
+#ifdef SPI
+    spi = (pin == 23) ? &SPI :
+#else
+    spi =
+#endif
+      new SPIClass(sercomTable[i].sercom,
+        sercomTable[i].miso, sercomTable[i].sck, sercomTable[i].mosi,
+        sercomTable[i].padTX, sercomTable[i].padRX);
     if((spi)) {
       spi->begin();
       pinPeripheral(sercomTable[i].mosi, sercomTable[i].pinFunc);
@@ -84,7 +95,9 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
         }
         dma.free();
       }
+#ifdef SPI
       if(spi != &SPI) delete spi;
+#endif
       spi = NULL;
     }
     free(dmaBuf);
