@@ -1,5 +1,13 @@
+/*
+TO DO:
+setPin(uint8_t p)
+updateLength(uint16_t n)
+updateType(neoPixelType t)
+*/
+
 #include "Adafruit_NeoPixel_ZeroDMA.h"
 #include "wiring_private.h" // pinPeripheral() function
+#include "bittable.h"       // Optional, see comments in show()
 
 Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(
   uint16_t n, uint8_t p, neoPixelType t) : Adafruit_NeoPixel(n, p, t),
@@ -10,8 +18,6 @@ Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(
 Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(void) :
   Adafruit_NeoPixel(), brightness(256), dmaBuf(NULL), spi(NULL) {
 }
-
-// TO DO: all the pin-change and length-change uglies
 
 Adafruit_NeoPixel_ZeroDMA::~Adafruit_NeoPixel_ZeroDMA() {
   dma.abort();
@@ -106,12 +112,25 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
   return false;
 }
 
-// TO DO: might change this to use a table for expanding each byte 3X.
-// Quicker but table requires 768 bytes flash, might be worth it.
 void Adafruit_NeoPixel_ZeroDMA::show(void) {
+#ifdef _BITTABLE_H_
+  // If bittable.h is included, 3:1 bit expansion is handled using a table
+  // lookup -- each byte of input (from NeoPixel buffer) is replaced with
+  // three bytes output (from table to DMA buffer).  This is quick but the
+  // table requires about 768 bytes of code space.
+  uint8_t *in = pixels, *out = dmaBuf, *table;
+  for(uint16_t p=numBytes; p--;) {
+    table  = (uint8_t *)&bitExpand[(*in++ * brightness) >> 8];
+    *out++ = *table++;
+    *out++ = *table++;
+    *out++ = *table++;
+  }
+#else
+  // If bittable.h is NOT included, 3:1 bit expansion is done on the fly.
+  // More complex, but smaller executable.
   uint32_t bitOffset = 0, byteOffset;
   uint8_t  c, b, bitOffsetWithinByte, bitMask, *ptr = pixels;
-  for(int p=0; p<numBytes; p++) {
+  for(uint16_t p=0; p<numBytes; p++) {
     c = (*ptr++ * brightness) >> 8;
     for(b=0x80; b; b >>= 1) {
       byteOffset          = bitOffset / 8;
@@ -133,12 +152,20 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
       bitOffset += 3;
     }
   }
+#endif // !_BITTABLE_H_
 }
 
+// Brightness is stored differently here than in normal NeoPixel library.
+// In either case it's *specified* the same: 0 (off) to 255 (brightest).
+// Classic NeoPixel rearranges this internally so 0 is max, 1 is off and
+// 255 is just below max...it's a decision based on how fixed-point math
+// is handled in that code.  Here it's stored internally as 1 (off) to
+// 256 (brightest), requiring a 16-bit value.
+
 void Adafruit_NeoPixel_ZeroDMA::setBrightness(uint8_t b) {
-  brightness = (uint16_t)b + 1;
+  brightness = (uint16_t)b + 1; // 0-255 in, 1-256 out
 }
 
 uint8_t Adafruit_NeoPixel_ZeroDMA::getBrightness(void) const {
-  return brightness - 1;
+  return brightness - 1; // 1-256 in, 0-255 out
 }

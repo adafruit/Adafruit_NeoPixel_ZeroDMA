@@ -13,10 +13,11 @@ class Adafruit_NeoPixel_ZeroDMA : public Adafruit_NeoPixel {
   Adafruit_NeoPixel_ZeroDMA(void);
   ~Adafruit_NeoPixel_ZeroDMA();
 
-  boolean begin(void);
-  void    show(),
-          setBrightness(uint8_t);
-  uint8_t getBrightness() const;
+  boolean     begin(void);
+  void        show(),
+              setBrightness(uint8_t);
+  uint8_t     getBrightness() const;
+  inline bool canShow(void) { return true; }
 
  protected:
 
