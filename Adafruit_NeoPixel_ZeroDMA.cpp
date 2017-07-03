@@ -1,8 +1,32 @@
 /*
-TO DO:
+DMA NeoPixel library for M0-based boards (Feather M0, Arduino Zero, etc.).
+Doesn't require stopping interrupts, so millis()/micros() don't lose time,
+soft PWM (for servos, etc.) still operate normally, etc.
+THIS IS A WORK-IN-PROGRESS AND NOT 100% THERE YET.
+
+THIS ONLY WORKS ON CERTAIN PINS.  THIS IS NORMAL.  Library uses SERCOM
+peripherals for SPI output, and the hardware only supports this on
+specific pins (plus, some SERCOMs are in use for Serial, I2C, etc.).
+See example sketch for explanation.
+
+0/1 bit timing does not precisely match NeoPixel/WS2812/SK6812 datasheet
+specs, but it seems to work well enough.  Use at your own peril.
+
+Currently this only supports strip declaration with length & pin known at
+compile time, so it's not a 100% drop-in replacement for all NeoPixel code
+right now.  But probably 99%+ of all sketches are written that way, so it's
+perfectly usable for most.  The stock NeoPixel library has the option of
+setting the length & pin number at run-time (so these can be stored in a
+config file or in EEPROM)...this is entirely possible here, just hasn't
+been written yet.  In that regard, TO DO:
 setPin(uint8_t p)
 updateLength(uint16_t n)
 updateType(neoPixelType t)
+
+Have not tested this yet with multiple instances (DMA-driven NeoPixels on
+multiple pins), but in theory it should work.  Should also be OK mixing
+DMA and non-DMA NeoPixels in same sketch (just use different constructor
+and pins for each).
 */
 
 #include "Adafruit_NeoPixel_ZeroDMA.h"
@@ -14,7 +38,8 @@ Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(
   brightness(256), dmaBuf(NULL), spi(NULL) {
 }
 
-// Might not have this constuctor option...gets nasty
+// NOT FINISHED -- need setPin(), updateLength(), updateType() for this.
+// Will require stopping DMA, reallocating, restarting DMA.  Fun times.
 Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(void) :
   Adafruit_NeoPixel(), brightness(256), dmaBuf(NULL), spi(NULL) {
 }
@@ -30,6 +55,20 @@ Adafruit_NeoPixel_ZeroDMA::~Adafruit_NeoPixel_ZeroDMA() {
   if(dmaBuf) free(dmaBuf);
 }
 
+/*
+This table contains the available pins and their corresponding SERCOMs and
+DMA-related registers and such.  M0 can actually handle SPI DMA on more
+pins than are indicated here, but the code design INTENTIONALLY limits it
+to specific pins.  This is not a technical limit, but a documentation issue.
+There are usually multiple pins available for each SERCOM, but each SERCOM
+can have only one active MOSI pin.  Rather than try to document "If you use
+in X, then pins Y and Z can't be used" (and repeating this explanation for
+up to four SERCOMs, and that the specific pins can vary for each board),
+it's 10,000X SIMPLER to explain and use if one specific pin has been
+preselected for each SERCOM.  I tried to pick pins that are nicely spaced
+around the board and don't knock out other vital peripherals.  SERCOM pin
+selection is NOT a fun process, believe me, it's much easier this way...
+*/
 struct {
   SERCOM        *sercom;
   Sercom        *sercomBase;
@@ -63,6 +102,20 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 
   Adafruit_NeoPixel::begin(); // Call base class begin() function 1st
   // TO DO: Check for successful malloc in base class here
+
+  // DMA buffer is 3X the NeoPixel buffer size.  Each bit is expanded
+  // 3:1 to allow use of SPI peripheral to generate NeoPixel-like timing
+  // (0b100 for a zero bit, 0b110 for a one bit).  SPI is clocked at
+  // 2.4 MHz, the 3:1 sizing then creates NeoPixel-like 800 KHz bitrate.
+  // The extra 90 bytes is the low-level latch at the end of the NeoPixel
+  // data stream.  When idle, SPI logic level is normally HIGH, we need
+  // LOW for latch.  There is no invert option.  Various tricks like
+  // switching the pin to a normal LOW output at end of data don't quite
+  // work, there's still small glitches.  So, solution here is to keep
+  // the SPI DMA transfer in an endless loop...it actually issues the
+  // NeoPixel data over and over again forever (this doesn't cost us
+  // anything, since it's 100% DMA, no CPU use)...and those 90 zero
+  // bytes at the end provide the 300 microsecond EOD latch.  Hack!
 
   uint8_t  bytesPerPixel = (wOffset = rOffset) ? 3 : 4;
   uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
