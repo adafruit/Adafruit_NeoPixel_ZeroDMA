@@ -166,44 +166,35 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 }
 
 void Adafruit_NeoPixel_ZeroDMA::show(void) {
+  // Expand 8 bits 'abcdefgh' to 24 bits '1a01b01c01d01e01f01g01h0'
 #ifdef _BITTABLE_H_
   // If bittable.h is included, 3:1 bit expansion is handled using a table
   // lookup -- each byte of input (from NeoPixel buffer) is replaced with
-  // three bytes output (from table to DMA buffer).  This is quick but the
-  // table requires about 768 bytes of code space.
-  uint8_t *in = pixels, *out = dmaBuf, *table;
+  // three bytes output (from table to DMA buffer).  This is about twice
+  // as quick as math below but the table requires about 1KB of code space.
+  uint8_t *in = pixels, *out = dmaBuf;
+  uint32_t expanded;
   for(uint16_t p=numBytes; p--;) {
-    table  = (uint8_t *)&bitExpand[(*in++ * brightness) >> 8];
-    *out++ = *table++;
-    *out++ = *table++;
-    *out++ = *table++;
+    expanded = bitExpand[(*in++ * brightness) >> 8];
+    *out++   = expanded >> 16; // Shifting 32-bit table entry is
+    *out++   = expanded >>  8; // about 11% faster than copying
+    *out++   = expanded;       // three values from a uint8_t table.
   }
 #else
   // If bittable.h is NOT included, 3:1 bit expansion is done on the fly.
   // More complex, but smaller executable.
-  uint32_t bitOffset = 0, byteOffset;
-  uint8_t  c, b, bitOffsetWithinByte, bitMask, *ptr = pixels;
-  for(uint16_t p=0; p<numBytes; p++) {
-    c = (*ptr++ * brightness) >> 8;
-    for(b=0x80; b; b >>= 1) {
-      byteOffset          = bitOffset / 8;
-      bitOffsetWithinByte = bitOffset & 7;
-      bitMask = (c & b) ? 0b110 : 0b100;
-      if(bitOffsetWithinByte <= 5) {
-        dmaBuf[byteOffset] = (dmaBuf[byteOffset]
-          & ~(0b111   << (5 - bitOffsetWithinByte)))
-          |  (bitMask << (5 - bitOffsetWithinByte));
-      } else {
-        dmaBuf[byteOffset] = (dmaBuf[byteOffset]
-          & ~(0b111   >> (bitOffsetWithinByte - 5)))
-          |  (bitMask >> (bitOffsetWithinByte - 5));
-        byteOffset++;
-        dmaBuf[byteOffset] = dmaBuf[byteOffset]
-          & ~(0b111   << (13 - bitOffsetWithinByte))
-          |  (bitMask << (13 - bitOffsetWithinByte));
-      }
-      bitOffset += 3;
-    }
+  uint8_t *in = pixels, *out = dmaBuf, i, abef, cdgh;
+  uint32_t expanded;
+  for(uint16_t p=numBytes; p--;) {
+    cdgh     = (*in++ * brightness) >> 8;
+    abef     = cdgh & 0b11001100; // ab00ef00
+    cdgh    &=        0b00110011; // 00cd00gh
+    expanded = ((abef * 0b1010000010100000) & 0b010010000000010010000000) |
+               ((cdgh * 0b0000101000001010) & 0b000000010010000000010010) |
+                                              0b100100100100100100100100;
+    *out++   = expanded >> 16;
+    *out++   = expanded >>  8;
+    *out++   = expanded;
   }
 #endif // !_BITTABLE_H_
 }
