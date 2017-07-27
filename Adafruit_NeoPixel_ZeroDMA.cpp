@@ -117,7 +117,7 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
   // anything, since it's 100% DMA, no CPU use)...and those 90 zero
   // bytes at the end provide the 300 microsecond EOD latch.  Hack!
 
-  uint8_t  bytesPerPixel = (wOffset = rOffset) ? 3 : 4;
+  uint8_t  bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
   uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
   if((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
 #ifdef SPI
@@ -187,8 +187,8 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
   uint32_t expanded;
   for(uint16_t p=numBytes; p--;) {
     cdgh     = (*in++ * brightness) >> 8;
-    abef     = cdgh & 0b11001100; // ab00ef00
-    cdgh    &=        0b00110011; // 00cd00gh
+    abef     =   cdgh & 0b11001100; // ab00ef00
+    cdgh    &=          0b00110011; // 00cd00gh
     expanded = ((abef * 0b1010000010100000) & 0b010010000000010010000000) |
                ((cdgh * 0b0000101000001010) & 0b000000010010000000010010) |
                                               0b100100100100100100100100;
