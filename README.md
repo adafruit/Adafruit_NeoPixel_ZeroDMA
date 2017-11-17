@@ -1,7 +1,7 @@
 # Adafruit_NeoPixel_ZeroDMA
 DMA-based NeoPixel library for M0 microcontrollers (Feather M0, Arduino Zero, etc.) Doesn't require stopping interrupts, so millis() & micros() don't lose time, soft PWM (for servos, etc.) still operate normally, etc.
 
-Requires LATEST Adafruit_NeoPixel, Adafruit_ZeroDMA and Adafruit_ASFcore libraries also be installed.
+Requires LATEST Adafruit_NeoPixel and Adafruit_ZeroDMA libraries also be installed.
 
 THIS IS A WORK-IN-PROGRESS AND NOT 100% THERE YET.
 

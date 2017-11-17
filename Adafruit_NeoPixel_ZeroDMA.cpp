@@ -131,25 +131,23 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
     if((spi)) {
       spi->begin();
       pinPeripheral(sercomTable[i].mosi, sercomTable[i].pinFunc);
-      dma.configure_peripheraltrigger(sercomTable[i].dmacID);
-      dma.configure_triggeraction(DMA_TRIGGER_ACTON_BEAT);
-      if(STATUS_OK == dma.allocate()) {
-        dma.setup_transfer_descriptor(
-          dmaBuf,             // move data from here
-          (void *)(&sercomTable[i].sercomBase->SPI.DATA.reg), // to here
-          bytesTotal,         // this many...
-          DMA_BEAT_SIZE_BYTE, // bytes/hword/words
-          true,               // increment source addr?
-          false);             // increment dest addr?
-        if(STATUS_OK == dma.add_descriptor()) {
+      dma.setTrigger(sercomTable[i].dmacID);
+      dma.setAction(DMA_TRIGGER_ACTON_BEAT);
+      if(DMA_STATUS_OK == dma.allocate()) {
+        if(dma.addDescriptor(
+         dmaBuf,             // move data from here
+         (void *)(&sercomTable[i].sercomBase->SPI.DATA.reg), // to here
+         bytesTotal,         // this many...
+         DMA_BEAT_SIZE_BYTE, // bytes/hword/words
+         true,               // increment source addr?
+         false)) {           // increment dest addr?
           dma.loop(true); // DMA transaction loops forever! Latch is built in.
-          memset(dmaBuf, 0, bytesTotal); // IMPORTANT - clears latch data at end
+          memset(dmaBuf, 0, bytesTotal); // IMPORTANT - clears latch data @ end
           // SPI transaction is started BUT NEVER ENDS.  This is important.
           // 800 khz * 3 = 2.4MHz
           spi->beginTransaction(SPISettings(2400000, MSBFIRST, SPI_MODE0));
-          if(STATUS_OK == dma.start_transfer_job()) {
-            return true; // SUCCESS
-          } // Else various errors, clean up partially-initialized stuff:
+          if(DMA_STATUS_OK == dma.startJob()) return true; // SUCCESS
+          // Else various errors, clean up partially-initialized stuff:
           spi->endTransaction();
         }
         dma.free();

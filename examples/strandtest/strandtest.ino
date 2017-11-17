@@ -3,8 +3,7 @@
 // of NeoPixel operations, see the examples included with the 'regular'
 // Adafruit_NeoPixel library.
 
-// Also requires LATEST Adafruit_NeoPixel, Adafruit_ZeroDMA and
-// Adafruit_ASFcore libraries.
+// Also requires LATEST Adafruit_NeoPixel and Adafruit_ZeroDMA libraries.
 
 #include <Adafruit_NeoPixel_ZeroDMA.h>
 
