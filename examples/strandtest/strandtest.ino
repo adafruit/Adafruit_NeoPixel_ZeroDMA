@@ -11,6 +11,7 @@
 // On Circuit Playground Express: 8, A2 and A7 (TX) are valid.
 // On Feather M0, Arduino Zero, etc.: 5, 11, A5 and 23 (SPI MOSI).
 // On GEMMA M0: pin 0.
+// On Trinket M0: pin 4.
 // On Metro M4: A3 (WIP - more to come)
 #define PIN         8
 #define NUM_PIXELS 10
