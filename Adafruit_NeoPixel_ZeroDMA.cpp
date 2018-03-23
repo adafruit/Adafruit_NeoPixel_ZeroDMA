@@ -22,6 +22,9 @@ been written yet.  In that regard, TO DO:
 setPin(uint8_t p)
 updateLength(uint16_t n)
 updateType(neoPixelType t)
+UPDATE: no, don't.  Please just use the C++ 'new' operator to allocate a
+strip (passing length & type) if needed that way.  It's been added to the
+NeoPixel library roadmap that these functions are deprecated.
 
 Have not tested this yet with multiple instances (DMA-driven NeoPixels on
 multiple pins), but in theory it should work.  Should also be OK mixing
