@@ -12,7 +12,7 @@
 // On Feather M0, Arduino Zero, etc.: 5, 11, A5 and 23 (SPI MOSI).
 // On GEMMA M0: pin 0.
 // On Trinket M0: pin 4.
-// On Metro M4: A3 (WIP - more to come)
+// On Metro M4: 3, 6, 8, 11, A3 and MOSI
 #define PIN         8
 #define NUM_PIXELS 10
 
