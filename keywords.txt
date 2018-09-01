@@ -1,0 +1,28 @@
+#######################################
+# Syntax Coloring Map For Adafruit_NeoPixel_ZeroDMA
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Adafruit_NeoPixel_ZeroDMA	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+show	KEYWORD2
+setBrightness	KEYWORD2
+getBrightness	KEYWORD2
+canShow	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+####################################### 
