@@ -13,6 +13,7 @@ class Adafruit_NeoPixel_ZeroDMA : public Adafruit_NeoPixel {
   Adafruit_NeoPixel_ZeroDMA(void);
   ~Adafruit_NeoPixel_ZeroDMA();
 
+  boolean     begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, uint8_t mosi, uint8_t miso, uint8_t sck, SercomSpiTXPad padTX, SercomRXPad padRX, EPioType pinFunc);
   boolean     begin(void);
   void        show(),
               setBrightness(uint8_t);

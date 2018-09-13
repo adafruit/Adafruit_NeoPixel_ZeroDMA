@@ -105,12 +105,12 @@ struct {
 };
 #define N_SERCOMS (sizeof(sercomTable) / sizeof(sercomTable[0]))
 
-boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
+boolean Adafruit_NeoPixel_ZeroDMA::begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, 
+                                         uint8_t mosi, uint8_t miso, uint8_t sck, 
+                                         SercomSpiTXPad padTX, SercomRXPad padRX, EPioType pinFunc) {
 
-  uint8_t i;
-  for(i=0; (i<N_SERCOMS) && (sercomTable[i].mosi != pin); i++);
-  if(i >= N_SERCOMS) return false; // Invalid pin
-
+  if(mosi != pin) return false; // Invalid pin
+  
   Adafruit_NeoPixel::begin(); // Call base class begin() function 1st
   // TO DO: Check for successful malloc in base class here
 
@@ -127,7 +127,7 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
   // NeoPixel data over and over again forever (this doesn't cost us
   // anything, since it's 100% DMA, no CPU use)...and those 90 zero
   // bytes at the end provide the 300 microsecond EOD latch.  Hack!
-
+  
   uint8_t  bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
   uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
   if((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
@@ -136,18 +136,18 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 #else
     spi =
 #endif
-      new SPIClass(sercomTable[i].sercom,
-        sercomTable[i].miso, sercomTable[i].sck, sercomTable[i].mosi,
-        sercomTable[i].padTX, sercomTable[i].padRX);
+      new SPIClass(sercom,
+        miso, sck, mosi,
+        padTX, padRX);
     if((spi)) {
       spi->begin();
-      pinPeripheral(sercomTable[i].mosi, sercomTable[i].pinFunc);
-      dma.setTrigger(sercomTable[i].dmacID);
+      pinPeripheral(mosi, pinFunc);
+      dma.setTrigger(dmacID);
       dma.setAction(DMA_TRIGGER_ACTON_BEAT);
       if(DMA_STATUS_OK == dma.allocate()) {
         if(dma.addDescriptor(
          dmaBuf,             // move data from here
-         (void *)(&sercomTable[i].sercomBase->SPI.DATA.reg), // to here
+         (void *)(&sercomBase->SPI.DATA.reg), // to here
          bytesTotal,         // this many...
          DMA_BEAT_SIZE_BYTE, // bytes/hword/words
          true,               // increment source addr?
@@ -172,6 +172,16 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
     dmaBuf = NULL;
   }
   return false;
+}
+
+boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
+
+  uint8_t i;
+  for(i=0; (i<N_SERCOMS) && (sercomTable[i].mosi != pin); i++);
+  if(i >= N_SERCOMS) return false; // Invalid pin
+  return begin(sercomTable[i].sercom, sercomTable[i].sercomBase, sercomTable[i].dmacID, 
+               sercomTable[i].mosi, sercomTable[i].miso, sercomTable[i].sck,
+               sercomTable[i].padTX, sercomTable[i].padRX, sercomTable[i].pinFunc);
 }
 
 void Adafruit_NeoPixel_ZeroDMA::show(void) {
