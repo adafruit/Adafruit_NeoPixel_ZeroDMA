@@ -204,7 +204,7 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 
     // TO DO: Check for successful malloc in base class here
     Adafruit_NeoPixel::begin(); // Call base class begin() function 1st
-    uint8_t  bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
+    uint8_t  bytesPerPixel = (wOffset == rOffset) ? 4 : 5;
     uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 24 + EXTRASTARTBYTES);
     if((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
       int i;
@@ -223,6 +223,7 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
       toggleMask = digitalPinToBitMask(pin) >> (byteOffset * 8);
 
       dma.allocate();
+      dma.setPriority(DMA_PRIORITY_3); //highest priority since latency is critical
       dma.addDescriptor(
         dmaBuf,             // source
         (void *)dst,        // destination
@@ -266,7 +267,7 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
       while(TCC0->SYNCBUSY.bit.CC0);
 
       // 2.4 MHz clock: 3 DMA xfers per NeoPixel bit = 800 KHz
-      TCC0->PER.reg = ((48000000 + 1200000) / 2400000) - 1;
+      TCC0->PER.reg = 15;
       while(TCC0->SYNCBUSY.bit.PER);
 
       TCC0->CTRLA.bit.ENABLE = 1;
@@ -328,7 +329,7 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
   } else { // NOT using SERCOM DMA technique, expansion is different...
     uint8_t *src = pixels; // Pixel buffer base address from NeoPixel lib
     uint8_t *dst = dmaBuf + EXTRASTARTBYTES;
-    uint32_t count = numLEDs * ((wOffset == rOffset) ? 3 : 4); // Bytes/pixel
+    uint32_t count = numLEDs * ((wOffset == rOffset) ? 4 : 5); // Bytes/pixel
     while(sending); // Wait for DMA callback, so pixel data isn't corrupted
     while(count--) {
       uint8_t byte = (*src++ * brightness) >> 8;
@@ -336,9 +337,11 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
         *dst++ = toggleMask;   // Initial toggle high
         if(byte & bit) {
           *dst++ = 0;          // Hold high at 1/3
+          *dst++ = 0;
           *dst++ = toggleMask; // Toggle low at 2/3
         } else {
           *dst++ = toggleMask; // Toggle low at 1/3
+          *dst++ = 0;
           *dst++ = 0;          // Hold low at 2/3
         }
       }
