@@ -200,12 +200,12 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
     // Super-hacky thing specifically for the Trellis M4 lets us DMA to a
     // non-SERCOM pin.  Please don't rely on this as a general approach,
     // it's not RAM-efficient and is only practical here because the matrix
-    // size on that board is 32 pixels, not too bad (eats ~2.3K).
+    // size on that board is 32 pixels, not too bad (eats ~3K).
 
     // TO DO: Check for successful malloc in base class here
     Adafruit_NeoPixel::begin(); // Call base class begin() function 1st
     uint8_t  bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
-    uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 24 + EXTRASTARTBYTES);
+    uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 32 + EXTRASTARTBYTES);
     if((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
       int i;
 
@@ -265,8 +265,8 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
       TCC0->CC[0].reg = 0; // No PWM out
       while(TCC0->SYNCBUSY.bit.CC0);
 
-      // 2.4 MHz clock: 3 DMA xfers per NeoPixel bit = 800 KHz
-      TCC0->PER.reg = ((48000000 + 1200000) / 2400000) - 1;
+      // 3.2 MHz clock: 4 DMA xfers per NeoPixel bit = 800 KHz
+      TCC0->PER.reg = ((48000000 + 1600000) / 3200000) - 1;
       while(TCC0->SYNCBUSY.bit.PER);
 
       TCC0->CTRLA.bit.ENABLE = 1;
@@ -335,11 +335,13 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
       for(uint8_t bit=0x80; bit; bit >>= 1) {
         *dst++ = toggleMask;   // Initial toggle high
         if(byte & bit) {
-          *dst++ = 0;          // Hold high at 1/3
-          *dst++ = toggleMask; // Toggle low at 2/3
+          *dst++ = 0;          // Hold high at 1/4
+          *dst++ = 0;          // Hold high at 2/4
+          *dst++ = toggleMask; // Toggle low at 3/4
         } else {
-          *dst++ = toggleMask; // Toggle low at 1/3
-          *dst++ = 0;          // Hold low at 2/3
+          *dst++ = toggleMask; // Toggle low at 1/4
+          *dst++ = 0;          // Hold low at 2/4
+          *dst++ = 0;          // Hold low at 3/4
         }
       }
     }
