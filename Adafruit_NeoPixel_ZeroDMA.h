@@ -26,6 +26,14 @@ class Adafruit_NeoPixel_ZeroDMA : public Adafruit_NeoPixel {
   SPIClass        *spi;
   uint8_t         *dmaBuf;
   uint16_t         brightness;
+#ifdef __SAMD51__
+  // Hacky stuff for Trellis M4: PA27 (to NeoPixel matrix) is not on a
+  // SERCOM, nor a pattern generator pin (which would work with NeoPXL8),
+  // so we use the PORT toggle register to DMA NeoPixel data out. This is
+  // not RAM-efficient but we're just looking to control the 32 pixels of
+  // that matrix, not arbitrary-length strips, so the waste is localized.
+  uint8_t          toggleMask; // Port bit to toggle
+#endif
 };
 
 #endif // _ADAFRUIT_NEOPIXEL_ZERODMA_H_
