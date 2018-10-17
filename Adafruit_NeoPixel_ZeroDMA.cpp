@@ -223,6 +223,7 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
       toggleMask = digitalPinToBitMask(pin) >> (byteOffset * 8);
 
       dma.allocate();
+      dma.setPriority(DMA_PRIORITY_3); //highest priority since latency is critical
       dma.addDescriptor(
         dmaBuf,             // source
         (void *)dst,        // destination
@@ -233,7 +234,7 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 
       dma.setCallback(dmaCallback);
 
-      // Set up generic clock gen 2 as source for TCC0
+      // Set up generic clock gen 5 as source for TCC0
       // Datasheet recommends setting GENCTRL register in a single write,
       // so a temp value is used here to more easily construct a value.
       GCLK_GENCTRL_Type genctrl;
@@ -242,13 +243,13 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
       genctrl.bit.OE       = 1;
       genctrl.bit.DIVSEL   = 0; // Do not divide clock source
       genctrl.bit.DIV      = 0;
-      GCLK->GENCTRL[2].reg = genctrl.reg;
+      GCLK->GENCTRL[5].reg = genctrl.reg;
       while(GCLK->SYNCBUSY.bit.GENCTRL1 == 1);
 
       GCLK->PCHCTRL[TCC0_GCLK_ID].bit.CHEN = 0;
       while(GCLK->PCHCTRL[TCC0_GCLK_ID].bit.CHEN); // Wait for disable
       GCLK_PCHCTRL_Type pchctrl;
-      pchctrl.bit.GEN                 = GCLK_PCHCTRL_GEN_GCLK2_Val;
+      pchctrl.bit.GEN                 = GCLK_PCHCTRL_GEN_GCLK5_Val;
       pchctrl.bit.CHEN                = 1;
       GCLK->PCHCTRL[TCC0_GCLK_ID].reg = pchctrl.reg;
       while(!GCLK->PCHCTRL[TCC0_GCLK_ID].bit.CHEN); // Wait for enable
