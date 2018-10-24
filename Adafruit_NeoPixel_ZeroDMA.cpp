@@ -178,14 +178,12 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(
 #define EXTRASTARTBYTES 24 // Empty bytes issued until DMA timing solidifies
 #define LATCHTIME      300 // Time, in microseconds, for end-of-data latch
 
-static volatile boolean  sending = 0; // Set while DMA transfer is active
 static volatile uint32_t lastBitTime; // micros() when last bit issued
 
-// Called at end of DMA transfer.  Clears 'sending' flag and notes
+// Called at end of DMA transfer. Notes
 // start-of-NeoPixel-latch time.
 static void dmaCallback(Adafruit_ZeroDMA* dma) {
   lastBitTime = micros();
-  sending     = 0;
 }
 #endif
 
@@ -330,7 +328,7 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
     uint8_t *src = pixels; // Pixel buffer base address from NeoPixel lib
     uint8_t *dst = dmaBuf + EXTRASTARTBYTES;
     uint32_t count = numLEDs * ((wOffset == rOffset) ? 3 : 4); // Bytes/pixel
-    while(sending); // Wait for DMA callback, so pixel data isn't corrupted
+    while(dma.isActive()); // Wait for DMA callback, so pixel data isn't corrupted
     while(count--) {
       uint8_t byte = (*src++ * brightness) >> 8;
       for(uint8_t bit=0x80; bit; bit >>= 1) {
@@ -348,7 +346,6 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
     }
 
     dma.startJob();
-    sending = 1;
     // Wait for latch, factor out EXTRASTARTBYTES transmission time too!
     while((micros() - lastBitTime) <= (LATCHTIME - (EXTRASTARTBYTES * 5 / 4)));
     dma.trigger();
