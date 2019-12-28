@@ -36,12 +36,19 @@ and pins for each).
 #include "bittable.h"       // Optional, see comments in show()
 #include "wiring_private.h" // pinPeripheral() function
 
+/** @brief Initialize a NeoPixel strand
+    @param n Number of pixels
+    @param p Pin to use (we will figure out what Sercom to use
+    @param t The color order / type of pixels
+*/
 Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(uint16_t n, uint8_t p,
                                                      neoPixelType t)
     : Adafruit_NeoPixel(n, p, t), brightness(256), dmaBuf(NULL), spi(NULL) {}
 
-// NOT FINISHED -- need setPin(), updateLength(), updateType() for this.
-// Will require stopping DMA, reallocating, restarting DMA.  Fun times.
+/** @brief Create a NOT FINISHED onject -- need setPin(), updateLength(), 
+    updateType() for this.
+    Will require stopping DMA, reallocating, restarting DMA.  Fun times.
+*/
 Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(void)
     : Adafruit_NeoPixel(), brightness(256), dmaBuf(NULL), spi(NULL) {}
 
@@ -108,11 +115,11 @@ struct {
 
 #define N_SERCOMS (sizeof(sercomTable) / sizeof(sercomTable[0]))
 
-boolean Adafruit_NeoPixel_ZeroDMA::begin(SERCOM *sercom, Sercom *sercomBase,
-                                         uint8_t dmacID, uint8_t mosi,
-                                         uint8_t miso, uint8_t sck,
-                                         SercomSpiTXPad padTX,
-                                         SercomRXPad padRX, EPioType pinFunc) {
+boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
+					  uint8_t dmacID, uint8_t mosi,
+					  uint8_t miso, uint8_t sck,
+					  SercomSpiTXPad padTX,
+					  SercomRXPad padRX, EPioType pinFunc) {
 
   if (mosi != pin)
     return false; // Invalid pin
@@ -191,6 +198,10 @@ static volatile uint32_t lastBitTime; // micros() when last bit issued
 static void dmaCallback(Adafruit_ZeroDMA *dma) { lastBitTime = micros(); }
 #endif
 
+
+/** @brief Initialize SPI sercom and DMA
+    @returns True
+ */
 boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 
   uint8_t i;
@@ -293,12 +304,14 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 #ifdef __SAMD51__
   toggleMask = 0; // Using library's normal SERCOM DMA technique
 #endif
-  return begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
-               sercomTable[i].dmacID, sercomTable[i].mosi, sercomTable[i].miso,
-               sercomTable[i].sck, sercomTable[i].padTX, sercomTable[i].padRX,
-               sercomTable[i].pinFunc);
+  return _begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
+		sercomTable[i].dmacID, sercomTable[i].mosi, sercomTable[i].miso,
+		sercomTable[i].sck, sercomTable[i].padTX, sercomTable[i].padRX,
+		sercomTable[i].pinFunc);
 }
 
+/** @brief Convert the NeoPixel buffer to larger DMA buffer and start xfer
+ */
 void Adafruit_NeoPixel_ZeroDMA::show(void) {
 #ifdef __SAMD51__
   if (!toggleMask) { // Using normal SERCOM DMA technique?
@@ -368,17 +381,21 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
 #endif
 }
 
-// Brightness is stored differently here than in normal NeoPixel library.
-// In either case it's *specified* the same: 0 (off) to 255 (brightest).
-// Classic NeoPixel rearranges this internally so 0 is max, 1 is off and
-// 255 is just below max...it's a decision based on how fixed-point math
-// is handled in that code.  Here it's stored internally as 1 (off) to
-// 256 (brightest), requiring a 16-bit value.
-
+/** @brief
+    Brightness is stored differently here than in normal NeoPixel library.
+    In either case it's *specified* the same: 0 (off) to 255 (brightest).
+    Classic NeoPixel rearranges this internally so 0 is max, 1 is off and
+    255 is just below max...it's a decision based on how fixed-point math
+    is handled in that code.  Here it's stored internally as 1 (off) to
+    256 (brightest), requiring a 16-bit value.
+    @param b 0 - 255 brightness value
+*/
 void Adafruit_NeoPixel_ZeroDMA::setBrightness(uint8_t b) {
   brightness = (uint16_t)b + 1; // 0-255 in, 1-256 out
 }
 
+/** @brief The brightness, back adjusted to 0-255 standard expectation
+    @returns 0 for off, 255 for max brightness */
 uint8_t Adafruit_NeoPixel_ZeroDMA::getBrightness(void) const {
   return brightness - 1; // 1-256 in, 0-255 out
 }
