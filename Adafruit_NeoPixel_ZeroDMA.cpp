@@ -45,7 +45,7 @@ Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(uint16_t n, uint8_t p,
                                                      neoPixelType t)
     : Adafruit_NeoPixel(n, p, t), brightness(256), dmaBuf(NULL), spi(NULL) {}
 
-/** @brief Create a NOT FINISHED onject -- need setPin(), updateLength(), 
+/** @brief Create a NOT FINISHED onject -- need setPin(), updateLength(),
     updateType() for this.
     Will require stopping DMA, reallocating, restarting DMA.  Fun times.
 */
@@ -116,10 +116,10 @@ struct {
 #define N_SERCOMS (sizeof(sercomTable) / sizeof(sercomTable[0]))
 
 boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
-					  uint8_t dmacID, uint8_t mosi,
-					  uint8_t miso, uint8_t sck,
-					  SercomSpiTXPad padTX,
-					  SercomRXPad padRX, EPioType pinFunc) {
+                                          uint8_t dmacID, uint8_t mosi,
+                                          uint8_t miso, uint8_t sck,
+                                          SercomSpiTXPad padTX,
+                                          SercomRXPad padRX, EPioType pinFunc) {
 
   if (mosi != pin)
     return false; // Invalid pin
@@ -197,7 +197,6 @@ static volatile uint32_t lastBitTime; // micros() when last bit issued
 // start-of-NeoPixel-latch time.
 static void dmaCallback(Adafruit_ZeroDMA *dma) { lastBitTime = micros(); }
 #endif
-
 
 /** @brief Initialize SPI sercom and DMA
     @returns True
@@ -305,9 +304,9 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
   toggleMask = 0; // Using library's normal SERCOM DMA technique
 #endif
   return _begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
-		sercomTable[i].dmacID, sercomTable[i].mosi, sercomTable[i].miso,
-		sercomTable[i].sck, sercomTable[i].padTX, sercomTable[i].padRX,
-		sercomTable[i].pinFunc);
+                sercomTable[i].dmacID, sercomTable[i].mosi, sercomTable[i].miso,
+                sercomTable[i].sck, sercomTable[i].padTX, sercomTable[i].padRX,
+                sercomTable[i].pinFunc);
 }
 
 /** @brief Convert the NeoPixel buffer to larger DMA buffer and start xfer

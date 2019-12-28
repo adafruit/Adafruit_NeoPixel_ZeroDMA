@@ -19,17 +19,17 @@ public:
   void show();
   void setBrightness(uint8_t);
   uint8_t getBrightness() const;
-  /** 
-   * @brief Override NeoPixel canShow, this always returns true because we 
+  /**
+   * @brief Override NeoPixel canShow, this always returns true because we
    * double buffer
    * @returns True always */
   inline bool canShow(void) { return true; }
 
 protected:
   Adafruit_ZeroDMA dma; ///< The DMA manager for the SPI class
-  SPIClass *spi;  ///< Underlying SPI hardware interface we use to DMA
-    uint8_t *dmaBuf; ///< The raw buffer we write to SPI to mimic NeoPixel
-      uint16_t brightness;  ///<  1 (off) to 256 (brightest)
+  SPIClass *spi;        ///< Underlying SPI hardware interface we use to DMA
+  uint8_t *dmaBuf;      ///< The raw buffer we write to SPI to mimic NeoPixel
+  uint16_t brightness;  ///<  1 (off) to 256 (brightest)
 #ifdef __SAMD51__
   // Hacky stuff for Trellis M4: PA27 (to NeoPixel matrix) is not on a
   // SERCOM, nor a pattern generator pin (which would work with NeoPXL8),
@@ -39,10 +39,10 @@ protected:
   uint8_t toggleMask; // Port bit to toggle
 #endif
 
- private:
+private:
   boolean _begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID,
-		 uint8_t mosi, uint8_t miso, uint8_t sck, SercomSpiTXPad padTX,
-		 SercomRXPad padRX, EPioType pinFunc);
+                 uint8_t mosi, uint8_t miso, uint8_t sck, SercomSpiTXPad padTX,
+                 SercomRXPad padRX, EPioType pinFunc);
 };
 
 #endif // _ADAFRUIT_NEOPIXEL_ZERODMA_H_
