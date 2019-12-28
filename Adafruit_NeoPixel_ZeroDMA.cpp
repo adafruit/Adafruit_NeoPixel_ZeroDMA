@@ -33,29 +33,36 @@ and pins for each).
 */
 
 #include "Adafruit_NeoPixel_ZeroDMA.h"
-#include "wiring_private.h" // pinPeripheral() function
 #include "bittable.h"       // Optional, see comments in show()
+#include "wiring_private.h" // pinPeripheral() function
 
-Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(
-  uint16_t n, uint8_t p, neoPixelType t) : Adafruit_NeoPixel(n, p, t),
-  brightness(256), dmaBuf(NULL), spi(NULL) {
-}
+/** @brief Initialize a NeoPixel strand
+    @param n Number of pixels
+    @param p Pin to use (we will figure out what Sercom to use
+    @param t The color order / type of pixels
+*/
+Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(uint16_t n, uint8_t p,
+                                                     neoPixelType t)
+    : Adafruit_NeoPixel(n, p, t), brightness(256), dmaBuf(NULL), spi(NULL) {}
 
-// NOT FINISHED -- need setPin(), updateLength(), updateType() for this.
-// Will require stopping DMA, reallocating, restarting DMA.  Fun times.
-Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(void) :
-  Adafruit_NeoPixel(), brightness(256), dmaBuf(NULL), spi(NULL) {
-}
+/** @brief Create a NOT FINISHED onject -- need setPin(), updateLength(),
+    updateType() for this.
+    Will require stopping DMA, reallocating, restarting DMA.  Fun times.
+*/
+Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(void)
+    : Adafruit_NeoPixel(), brightness(256), dmaBuf(NULL), spi(NULL) {}
 
 Adafruit_NeoPixel_ZeroDMA::~Adafruit_NeoPixel_ZeroDMA() {
   dma.abort();
-  if(spi) {
+  if (spi) {
     spi->endTransaction();
 #ifdef SPI
-    if(spi != &SPI) delete spi;
+    if (spi != &SPI)
+      delete spi;
 #endif
   }
-  if(dmaBuf) free(dmaBuf);
+  if (dmaBuf)
+    free(dmaBuf);
 }
 
 /*
@@ -72,6 +79,7 @@ preselected for each SERCOM.  I tried to pick pins that are nicely spaced
 around the board and don't knock out other vital peripherals.  SERCOM pin
 selection is NOT a fun process, believe me, it's much easier this way...
 */
+// clang-format off
 struct {
   SERCOM        *sercom;
   Sercom        *sercomBase;
@@ -103,15 +111,19 @@ struct {
   &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A5,    6,   7, SPI_PAD_0_SCK_3, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
 #endif
 };
+// clang-format on
+
 #define N_SERCOMS (sizeof(sercomTable) / sizeof(sercomTable[0]))
 
-boolean Adafruit_NeoPixel_ZeroDMA::begin(
-  SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, 
-  uint8_t mosi, uint8_t miso, uint8_t sck, 
-  SercomSpiTXPad padTX, SercomRXPad padRX, EPioType pinFunc) {
+boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
+                                          uint8_t dmacID, uint8_t mosi,
+                                          uint8_t miso, uint8_t sck,
+                                          SercomSpiTXPad padTX,
+                                          SercomRXPad padRX, EPioType pinFunc) {
 
-  if(mosi != pin) return false; // Invalid pin
-  
+  if (mosi != pin)
+    return false; // Invalid pin
+
   Adafruit_NeoPixel::begin(); // Call base class begin() function 1st
   // TO DO: Check for successful malloc in base class here
 
@@ -128,42 +140,43 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(
   // NeoPixel data over and over again forever (this doesn't cost us
   // anything, since it's 100% DMA, no CPU use)...and those 90 zero
   // bytes at the end provide the 300 microsecond EOD latch.  Hack!
-  
-  uint8_t  bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
-  uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
-  if((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
+
+  uint8_t bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
+  uint32_t bytesTotal = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
+  if ((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
 #ifdef SPI
     spi = (pin == 23) ? &SPI :
 #else
     spi =
 #endif
-      new SPIClass(sercom, miso, sck, mosi, padTX, padRX);
-    if((spi)) {
+                      new SPIClass(sercom, miso, sck, mosi, padTX, padRX);
+    if ((spi)) {
       spi->begin();
       pinPeripheral(mosi, pinFunc);
       dma.setTrigger(dmacID);
       dma.setAction(DMA_TRIGGER_ACTON_BEAT);
-      if(DMA_STATUS_OK == dma.allocate()) {
-        if(dma.addDescriptor(
-         dmaBuf,             // move data from here
-         (void *)(&sercomBase->SPI.DATA.reg), // to here
-         bytesTotal,         // this many...
-         DMA_BEAT_SIZE_BYTE, // bytes/hword/words
-         true,               // increment source addr?
-         false)) {           // increment dest addr?
+      if (DMA_STATUS_OK == dma.allocate()) {
+        if (dma.addDescriptor(dmaBuf, // move data from here
+                              (void *)(&sercomBase->SPI.DATA.reg), // to here
+                              bytesTotal,         // this many...
+                              DMA_BEAT_SIZE_BYTE, // bytes/hword/words
+                              true,               // increment source addr?
+                              false)) {           // increment dest addr?
           dma.loop(true); // DMA transaction loops forever! Latch is built in.
           memset(dmaBuf, 0, bytesTotal); // IMPORTANT - clears latch data @ end
           // SPI transaction is started BUT NEVER ENDS.  This is important.
           // 800 khz * 3 = 2.4MHz
           spi->beginTransaction(SPISettings(2400000, MSBFIRST, SPI_MODE0));
-          if(DMA_STATUS_OK == dma.startJob()) return true; // SUCCESS
+          if (DMA_STATUS_OK == dma.startJob())
+            return true; // SUCCESS
           // Else various errors, clean up partially-initialized stuff:
           spi->endTransaction();
         }
         dma.free();
       }
 #ifdef SPI
-      if(spi != &SPI) delete spi;
+      if (spi != &SPI)
+        delete spi;
 #endif
       spi = NULL;
     }
@@ -176,22 +189,24 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(
 #ifdef __SAMD51__
 // See notes below about M4 tomfoolery
 #define EXTRASTARTBYTES 24 // Empty bytes issued until DMA timing solidifies
-#define LATCHTIME      300 // Time, in microseconds, for end-of-data latch
+#define LATCHTIME 300      // Time, in microseconds, for end-of-data latch
 
 static volatile uint32_t lastBitTime; // micros() when last bit issued
 
 // Called at end of DMA transfer. Notes
 // start-of-NeoPixel-latch time.
-static void dmaCallback(Adafruit_ZeroDMA* dma) {
-  lastBitTime = micros();
-}
+static void dmaCallback(Adafruit_ZeroDMA *dma) { lastBitTime = micros(); }
 #endif
 
+/** @brief Initialize SPI sercom and DMA
+    @returns True
+ */
 boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 
   uint8_t i;
-  for(i=0; (i<N_SERCOMS) && (sercomTable[i].mosi != pin); i++);
-  if(i >= N_SERCOMS) {
+  for (i = 0; (i < N_SERCOMS) && (sercomTable[i].mosi != pin); i++)
+    ;
+  if (i >= N_SERCOMS) {
 #ifndef __SAMD51__
     return false; // Invalid pin
 #else
@@ -202,9 +217,9 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 
     // TO DO: Check for successful malloc in base class here
     Adafruit_NeoPixel::begin(); // Call base class begin() function 1st
-    uint8_t  bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
-    uint32_t bytesTotal    = (numLEDs * bytesPerPixel * 32 + EXTRASTARTBYTES);
-    if((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
+    uint8_t bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
+    uint32_t bytesTotal = (numLEDs * bytesPerPixel * 32 + EXTRASTARTBYTES);
+    if ((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
       int i;
 
       pinMode(pin, OUTPUT);
@@ -213,22 +228,22 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
       dma.setTrigger(TCC0_DMAC_ID_OVF);
       dma.setAction(DMA_TRIGGER_ACTON_BEAT);
 
-      EPortType  port       = g_APinDescription[pin].ulPort;
-      uint8_t    bit        = g_APinDescription[pin].ulPin; // 0-31
-      uint8_t    byteOffset = bit / 8;                      // 0-3
+      EPortType port = g_APinDescription[pin].ulPort;
+      uint8_t bit = g_APinDescription[pin].ulPin; // 0-31
+      uint8_t byteOffset = bit / 8;               // 0-3
       volatile uint8_t *dst =
-        (volatile uint8_t *)&(PORT->Group[port].OUTTGL.reg) + byteOffset;
+          (volatile uint8_t *)&(PORT->Group[port].OUTTGL.reg) + byteOffset;
       toggleMask = digitalPinToBitMask(pin) >> (byteOffset * 8);
 
       dma.allocate();
-      dma.setPriority(DMA_PRIORITY_3); //highest priority since latency is critical
-      dma.addDescriptor(
-        dmaBuf,             // source
-        (void *)dst,        // destination
-        bytesTotal,         // count
-        DMA_BEAT_SIZE_BYTE, // size per
-        true,               // increment source
-        false);             // don't increment destination
+      dma.setPriority(
+          DMA_PRIORITY_3);      // highest priority since latency is critical
+      dma.addDescriptor(dmaBuf, // source
+                        (void *)dst,        // destination
+                        bytesTotal,         // count
+                        DMA_BEAT_SIZE_BYTE, // size per
+                        true,               // increment source
+                        false);             // don't increment destination
 
       dma.setCallback(dmaCallback);
 
@@ -236,40 +251,48 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
       // Datasheet recommends setting GENCTRL register in a single write,
       // so a temp value is used here to more easily construct a value.
       GCLK_GENCTRL_Type genctrl;
-      genctrl.bit.SRC      = GCLK_GENCTRL_SRC_DFLL_Val; // 48 MHz source
-      genctrl.bit.GENEN    = 1; // Enable
-      genctrl.bit.OE       = 1;
-      genctrl.bit.DIVSEL   = 0; // Do not divide clock source
-      genctrl.bit.DIV      = 0;
+      genctrl.bit.SRC = GCLK_GENCTRL_SRC_DFLL_Val; // 48 MHz source
+      genctrl.bit.GENEN = 1;                       // Enable
+      genctrl.bit.OE = 1;
+      genctrl.bit.DIVSEL = 0; // Do not divide clock source
+      genctrl.bit.DIV = 0;
       GCLK->GENCTRL[5].reg = genctrl.reg;
-      while(GCLK->SYNCBUSY.bit.GENCTRL1 == 1);
+      while (GCLK->SYNCBUSY.bit.GENCTRL1 == 1)
+        ;
 
       GCLK->PCHCTRL[TCC0_GCLK_ID].bit.CHEN = 0;
-      while(GCLK->PCHCTRL[TCC0_GCLK_ID].bit.CHEN); // Wait for disable
+      while (GCLK->PCHCTRL[TCC0_GCLK_ID].bit.CHEN)
+        ; // Wait for disable
       GCLK_PCHCTRL_Type pchctrl;
-      pchctrl.bit.GEN                 = GCLK_PCHCTRL_GEN_GCLK5_Val;
-      pchctrl.bit.CHEN                = 1;
+      pchctrl.bit.GEN = GCLK_PCHCTRL_GEN_GCLK5_Val;
+      pchctrl.bit.CHEN = 1;
       GCLK->PCHCTRL[TCC0_GCLK_ID].reg = pchctrl.reg;
-      while(!GCLK->PCHCTRL[TCC0_GCLK_ID].bit.CHEN); // Wait for enable
+      while (!GCLK->PCHCTRL[TCC0_GCLK_ID].bit.CHEN)
+        ; // Wait for enable
 
       // Disable TCC before configuring it
       TCC0->CTRLA.bit.ENABLE = 0;
-      while(TCC0->SYNCBUSY.bit.ENABLE);
+      while (TCC0->SYNCBUSY.bit.ENABLE)
+        ;
 
       TCC0->CTRLA.bit.PRESCALER = TCC_CTRLA_PRESCALER_DIV1_Val; // 1:1 Prescale
 
       TCC0->WAVE.bit.WAVEGEN = TCC_WAVE_WAVEGEN_NPWM_Val; // Normal PWM mode
-      while(TCC0->SYNCBUSY.bit.WAVE);
+      while (TCC0->SYNCBUSY.bit.WAVE)
+        ;
 
       TCC0->CC[0].reg = 0; // No PWM out
-      while(TCC0->SYNCBUSY.bit.CC0);
+      while (TCC0->SYNCBUSY.bit.CC0)
+        ;
 
       // 3.2 MHz clock: 4 DMA xfers per NeoPixel bit = 800 KHz
       TCC0->PER.reg = ((48000000 + 1600000) / 3200000) - 1;
-      while(TCC0->SYNCBUSY.bit.PER);
+      while (TCC0->SYNCBUSY.bit.PER)
+        ;
 
       TCC0->CTRLA.bit.ENABLE = 1;
-      while(TCC0->SYNCBUSY.bit.ENABLE);
+      while (TCC0->SYNCBUSY.bit.ENABLE)
+        ;
 
       memset(dmaBuf, 0, EXTRASTARTBYTES); // Initialize buf start with zeros
 
@@ -280,46 +303,48 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 #ifdef __SAMD51__
   toggleMask = 0; // Using library's normal SERCOM DMA technique
 #endif
-  return begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
-    sercomTable[i].dmacID, sercomTable[i].mosi, sercomTable[i].miso,
-    sercomTable[i].sck, sercomTable[i].padTX, sercomTable[i].padRX,
-    sercomTable[i].pinFunc);
+  return _begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
+                sercomTable[i].dmacID, sercomTable[i].mosi, sercomTable[i].miso,
+                sercomTable[i].sck, sercomTable[i].padTX, sercomTable[i].padRX,
+                sercomTable[i].pinFunc);
 }
 
+/** @brief Convert the NeoPixel buffer to larger DMA buffer and start xfer
+ */
 void Adafruit_NeoPixel_ZeroDMA::show(void) {
 #ifdef __SAMD51__
-  if(!toggleMask) { // Using normal SERCOM DMA technique?
+  if (!toggleMask) { // Using normal SERCOM DMA technique?
 #endif
 
-  // Expand 8 bits 'abcdefgh' to 24 bits '1a01b01c01d01e01f01g01h0'
+    // Expand 8 bits 'abcdefgh' to 24 bits '1a01b01c01d01e01f01g01h0'
 #ifdef _BITTABLE_H_
-  // If bittable.h is included, 3:1 bit expansion is handled using a table
-  // lookup -- each byte of input (from NeoPixel buffer) is replaced with
-  // three bytes output (from table to DMA buffer).  This is about twice
-  // as quick as math below but the table requires about 1KB of code space.
-  uint8_t *in = pixels, *out = dmaBuf;
-  uint32_t expanded;
-  for(uint16_t p=numBytes; p--;) {
-    expanded = bitExpand[(*in++ * brightness) >> 8];
-    *out++   = expanded >> 16; // Shifting 32-bit table entry is
-    *out++   = expanded >>  8; // about 11% faster than copying
-    *out++   = expanded;       // three values from a uint8_t table.
-  }
+    // If bittable.h is included, 3:1 bit expansion is handled using a table
+    // lookup -- each byte of input (from NeoPixel buffer) is replaced with
+    // three bytes output (from table to DMA buffer).  This is about twice
+    // as quick as math below but the table requires about 1KB of code space.
+    uint8_t *in = pixels, *out = dmaBuf;
+    uint32_t expanded;
+    for (uint16_t p = numBytes; p--;) {
+      expanded = bitExpand[(*in++ * brightness) >> 8];
+      *out++ = expanded >> 16; // Shifting 32-bit table entry is
+      *out++ = expanded >> 8;  // about 11% faster than copying
+      *out++ = expanded;       // three values from a uint8_t table.
+    }
 #else
   // If bittable.h is NOT included, 3:1 bit expansion is done on the fly.
   // More complex, but smaller executable.
   uint8_t *in = pixels, *out = dmaBuf, i, abef, cdgh;
   uint32_t expanded;
-  for(uint16_t p=numBytes; p--;) {
-    cdgh     = (*in++ * brightness) >> 8;
-    abef     =   cdgh & 0b11001100; // ab00ef00
-    cdgh    &=          0b00110011; // 00cd00gh
+  for (uint16_t p = numBytes; p--;) {
+    cdgh = (*in++ * brightness) >> 8;
+    abef = cdgh & 0b11001100; // ab00ef00
+    cdgh &= 0b00110011;       // 00cd00gh
     expanded = ((abef * 0b1010000010100000) & 0b010010000000010010000000) |
                ((cdgh * 0b0000101000001010) & 0b000000010010000000010010) |
-                                              0b100100100100100100100100;
-    *out++   = expanded >> 16;
-    *out++   = expanded >>  8;
-    *out++   = expanded;
+               0b100100100100100100100100;
+    *out++ = expanded >> 16;
+    *out++ = expanded >> 8;
+    *out++ = expanded;
   }
 #endif // !_BITTABLE_H_
 
@@ -328,12 +353,13 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
     uint8_t *src = pixels; // Pixel buffer base address from NeoPixel lib
     uint8_t *dst = dmaBuf + EXTRASTARTBYTES;
     uint32_t count = numLEDs * ((wOffset == rOffset) ? 3 : 4); // Bytes/pixel
-    while(dma.isActive()); // Wait for DMA callback, so pixel data isn't corrupted
-    while(count--) {
+    while (dma.isActive())
+      ; // Wait for DMA callback, so pixel data isn't corrupted
+    while (count--) {
       uint8_t byte = (*src++ * brightness) >> 8;
-      for(uint8_t bit=0x80; bit; bit >>= 1) {
-        *dst++ = toggleMask;   // Initial toggle high
-        if(byte & bit) {
+      for (uint8_t bit = 0x80; bit; bit >>= 1) {
+        *dst++ = toggleMask; // Initial toggle high
+        if (byte & bit) {
           *dst++ = 0;          // Hold high at 1/4
           *dst++ = 0;          // Hold high at 2/4
           *dst++ = toggleMask; // Toggle low at 3/4
@@ -347,23 +373,28 @@ void Adafruit_NeoPixel_ZeroDMA::show(void) {
 
     dma.startJob();
     // Wait for latch, factor out EXTRASTARTBYTES transmission time too!
-    while((micros() - lastBitTime) <= (LATCHTIME - (EXTRASTARTBYTES * 5 / 4)));
+    while ((micros() - lastBitTime) <= (LATCHTIME - (EXTRASTARTBYTES * 5 / 4)))
+      ;
     dma.trigger();
   }
 #endif
 }
 
-// Brightness is stored differently here than in normal NeoPixel library.
-// In either case it's *specified* the same: 0 (off) to 255 (brightest).
-// Classic NeoPixel rearranges this internally so 0 is max, 1 is off and
-// 255 is just below max...it's a decision based on how fixed-point math
-// is handled in that code.  Here it's stored internally as 1 (off) to
-// 256 (brightest), requiring a 16-bit value.
-
+/** @brief
+    Brightness is stored differently here than in normal NeoPixel library.
+    In either case it's *specified* the same: 0 (off) to 255 (brightest).
+    Classic NeoPixel rearranges this internally so 0 is max, 1 is off and
+    255 is just below max...it's a decision based on how fixed-point math
+    is handled in that code.  Here it's stored internally as 1 (off) to
+    256 (brightest), requiring a 16-bit value.
+    @param b 0 - 255 brightness value
+*/
 void Adafruit_NeoPixel_ZeroDMA::setBrightness(uint8_t b) {
   brightness = (uint16_t)b + 1; // 0-255 in, 1-256 out
 }
 
+/** @brief The brightness, back adjusted to 0-255 standard expectation
+    @returns 0 for off, 255 for max brightness */
 uint8_t Adafruit_NeoPixel_ZeroDMA::getBrightness(void) const {
   return brightness - 1; // 1-256 in, 0-255 out
 }

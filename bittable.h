@@ -1,6 +1,7 @@
 #ifndef _BITTABLE_H_
 #define _BITTABLE_H_
 
+// clang-format off
 const uint32_t bitExpand[256] = {
   0b100100100100100100100100,
   0b100100100100100100100110,
@@ -259,5 +260,6 @@ const uint32_t bitExpand[256] = {
   0b110110110110110110110100,
   0b110110110110110110110110
 };
+// clang-format on
 
 #endif // _BITTABLE_H_
