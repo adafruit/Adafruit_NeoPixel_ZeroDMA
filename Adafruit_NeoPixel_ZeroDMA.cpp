@@ -115,6 +115,18 @@ struct {
 
 #define N_SERCOMS (sizeof(sercomTable) / sizeof(sercomTable[0]))
 
+/** @brief Initialize the underlying SPI SERCOM for DMA transfers
+    @param sercom Pointer to the underlying SERCOM from the Arduino core
+    @param sercomBase the ASF Sercom register
+    @param dmacID the DMAC id that matches the TX for the sercom (check DS)
+    @param mosi The MOSI pin (where we send data to the neopixel)
+    @param miso The MISO pin for the sercom (required even tho not used)
+    @param sck The SCK pin for the sercom (required even tho not used)
+    @param padTX the pinmux set up for SPI SERCOM pin config
+    @param padRX the pinmux set up for SPI SERCOM pin config
+    @param pinFun The pinmux setup for which 'type' of pinmux we use
+    @returns True or false on success
+*/
 boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
                                           uint8_t dmacID, uint8_t mosi,
                                           uint8_t miso, uint8_t sck,

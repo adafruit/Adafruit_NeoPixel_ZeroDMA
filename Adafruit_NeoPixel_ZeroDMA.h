@@ -39,7 +39,6 @@ protected:
   uint8_t toggleMask; // Port bit to toggle
 #endif
 
-private:
   boolean _begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID,
                  uint8_t mosi, uint8_t miso, uint8_t sck, SercomSpiTXPad padTX,
                  SercomRXPad padRX, EPioType pinFunc);
