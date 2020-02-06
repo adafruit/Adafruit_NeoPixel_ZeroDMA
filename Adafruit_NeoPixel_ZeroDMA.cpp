@@ -124,7 +124,7 @@ struct {
     @param sck The SCK pin for the sercom (required even tho not used)
     @param padTX the pinmux set up for SPI SERCOM pin config
     @param padRX the pinmux set up for SPI SERCOM pin config
-    @param pinFun The pinmux setup for which 'type' of pinmux we use
+    @param pinFunc The pinmux setup for which 'type' of pinmux we use
     @returns True or false on success
 */
 boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
