@@ -60,6 +60,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_adafruit___neo_pixel___zero_d_m_a-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -105,6 +106,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:afe902ea5e55b7cb44a05fb4f645a9280"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_adafruit___neo_pixel___zero_d_m_a.html#afe902ea5e55b7cb44a05fb4f645a9280">canShow</a> (void)</td></tr>
 <tr class="memdesc:afe902ea5e55b7cb44a05fb4f645a9280"><td class="mdescLeft">&#160;</td><td class="mdescRight">Override NeoPixel canShow, this always returns true because we double buffer.  <a href="#afe902ea5e55b7cb44a05fb4f645a9280">More...</a><br /></td></tr>
 <tr class="separator:afe902ea5e55b7cb44a05fb4f645a9280"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a0ae6b17aa22f87469cf3550c5cde129f"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_adafruit___neo_pixel___zero_d_m_a.html#a0ae6b17aa22f87469cf3550c5cde129f">_begin</a> (SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, uint8_t mosi, uint8_t miso, uint8_t sck, SercomSpiTXPad padTX, SercomRXPad padRX, EPioType pinFunc)</td></tr>
+<tr class="memdesc:a0ae6b17aa22f87469cf3550c5cde129f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the underlying SPI SERCOM for DMA transfers.  <a href="#a0ae6b17aa22f87469cf3550c5cde129f">More...</a><br /></td></tr>
+<tr class="separator:a0ae6b17aa22f87469cf3550c5cde129f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -267,6 +274,101 @@ uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
 
 <p>Override NeoPixel canShow, this always returns true because we double buffer. </p>
 <dl class="section return"><dt>Returns</dt><dd>True always </dd></dl>
+
+</div>
+</div>
+<a id="a0ae6b17aa22f87469cf3550c5cde129f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ae6b17aa22f87469cf3550c5cde129f">&#9670;&nbsp;</a></span>_begin()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean Adafruit_NeoPixel_ZeroDMA::_begin </td>
+          <td>(</td>
+          <td class="paramtype">SERCOM *&#160;</td>
+          <td class="paramname"><em>sercom</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Sercom *&#160;</td>
+          <td class="paramname"><em>sercomBase</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>dmacID</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>mosi</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>miso</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>sck</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SercomSpiTXPad&#160;</td>
+          <td class="paramname"><em>padTX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SercomRXPad&#160;</td>
+          <td class="paramname"><em>padRX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">EPioType&#160;</td>
+          <td class="paramname"><em>pinFunc</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the underlying SPI SERCOM for DMA transfers. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sercom</td><td>Pointer to the underlying SERCOM from the Arduino core </td></tr>
+    <tr><td class="paramname">sercomBase</td><td>the ASF Sercom register </td></tr>
+    <tr><td class="paramname">dmacID</td><td>the DMAC id that matches the TX for the sercom (check DS) </td></tr>
+    <tr><td class="paramname">mosi</td><td>The MOSI pin (where we send data to the neopixel) </td></tr>
+    <tr><td class="paramname">miso</td><td>The MISO pin for the sercom (required even tho not used) </td></tr>
+    <tr><td class="paramname">sck</td><td>The SCK pin for the sercom (required even tho not used) </td></tr>
+    <tr><td class="paramname">padTX</td><td>the pinmux set up for SPI SERCOM pin config </td></tr>
+    <tr><td class="paramname">padRX</td><td>the pinmux set up for SPI SERCOM pin config </td></tr>
+    <tr><td class="paramname">pinFunc</td><td>The pinmux setup for which 'type' of pinmux we use </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True or false on success </dd></dl>
 
 </div>
 </div>
