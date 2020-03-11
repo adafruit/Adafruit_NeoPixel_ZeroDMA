@@ -1,6 +1,8 @@
 #if !defined(_NEODMA_PINS_H_)
 #define _NEODMA_PINS_H_
 
+// INCOHERENT RAMBLING NOTES ARE AT THE BOTTOM OF THIS FILE.
+
 // clang-format off
 
 /*
@@ -32,57 +34,6 @@ struct {
   EPioType       pinFunc;
 } sercomTable[] = {
 // sercom   base     dmacID              mosi  padTX            pinFunc
-
-#if defined(ARDUINO_GEMMA_M0)
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    0, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-#elif defined(ARDUINO_TRINKET_M0)
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    4, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-#elif defined(ADAFRUIT_CIRCUITPLAYGROUND_M0)
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A2, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   A7, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-#elif defined(__SAMD51__) // Metro M4
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX, MOSI, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,    6, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM,
-#else // Metro M0
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   11, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    5, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   23, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A5, SPI_PAD_0_SCK_3, PIO_SERCOM_ALT,
-#endif
-
-};
-
-#define N_SERCOMS (sizeof sercomTable / sizeof sercomTable[0])
-
-#endif // _NEODMA_PINS_H_
-
-
-#if 0 // WIP
-
-// NOTE TO FUTURE SELF: avoiding pins used by essential SERCOM peripherals
-// (I2C, Serial) was a design decision to make documentation easier (not
-// having to explain "if you have DMA NeoPixels on this pin, you can't use
-// I2C devices") (exception being the SPI MOSI pin, because the older
-// library handled that on Metro boards and it's not as widely used as I2C).
-// HOWEVER, on many boards where there's only an "external" I2C bus (no
-// onboard sensors or such sharing the bus), it mmmmight be sensible to
-// allow DMA NeoPixels on either the SDA or SCL pins, since the NeoPixels
-// at that point physically block I2C (ditto for the Serial1 TX/RX pins) --
-// it's sort of implied that the peripheral can't be used at the same time,
-// but as implemented right now, it additionally *enforces* not using DMA
-// NeoPixels on those pins (at all, not just when not-using-peripheral).
-// Maybe that's too strict and not necessary. Or maybe the selection of
-// pins here, as-is, adequately covers most situations. Just saying there
-// might be a possibility of having to revisit these tables to add 1-2 more
-// pin options that overlap I2C or Serial1 on boards where those are
-// physically exposed and not shared with onboard peripherals. It's no fun,
-// requires using the pinfinder.py script (in extras directory) and looking
-// for the right missing items to add on a per-board basis.
 
 #if defined(ADAFRUIT_FEATHER_M0)
   // Serial1 (TX/RX) is on SERCOM0, do not use
@@ -262,6 +213,50 @@ struct {
   &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
 #endif
 
+#if defined(ADAFRUIT_PYGAMER_M4_EXPRESS)
+  // SERCOM0,3 are 100% in the clear, but few pins exposed
+  // SPI (SD card) is on SERCOM1, no pins exposed, do not use
+  // I2C on SERCOM2, do not use
+  // SPI1 (TFT) is on SERCOM4, no pins exposed, do not use
+  // Serial1 (TX/RX) is on SERCOM5
+  // PyGamer uses QSPI flash, not on a SERCOM
+  // NEOPIX connector is pin 2 (PB03) -- unfortunately that's SERCOM5/PAD[1]
+  // with no other options, and PAD[1] can't be a MOSI output.
+  // SENSE connector is pin 3 (PB02) -- SERCOM5/PAD[0], which could be a
+  // MOSI out, but interferes with Serial1.
+  // Onboard NeoPixels on pin 8 (PA15) -- SERCOM2/PAD[3] or SERCOM4/PAD[3],
+  // both in use (I2C and SPI1, respectively). It's a short length of pixels
+  // and DMA isn't likely to be a huge benefit there anyway.
+  // A couple pins on the FeatherWing header are OK though...
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
+  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   12, SPI_PAD_0_SCK_1, PIO_SERCOM,
+#endif
+
+#if defined(ADAFRUIT_PYGAMER_ADVANCE_M4_EXPRESS)
+  // Requirements are identical to PYGAMER_M4_EXPRESS above
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
+  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   12, SPI_PAD_0_SCK_1, PIO_SERCOM,
+#endif
+
+#if defined(ADAFRUIT_PYBADGE_M4_EXPRESS)
+  // SERCOM0 is 100% in the clear, but few pins exposed
+  // SPI is on SERCOM1, but OK to use (as SPI MOSI)
+  // I2C on SERCOM2, do not use
+  // SPI1 (TFT) is on SERCOM4, no pins exposed, do not use
+  // PDM mic is on SERCOM3, do not use
+  // Serial1 (TX/RX) is on SERCOM5
+  // Rules are similar to PyGamer, but without an SD card we at least
+  // allow an option of using MOSI pin (but losing SPI in the process).
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
+  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM,
+#endif
+
+#if defined(ADAFRUIT_PYBADGE_AIRLIFT_M4)
+  // Requirements are identical to PYBADGE_M4_EXPRESS above
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
+  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM,
+#endif
+
 #if defined(ADAFRUIT_CRICKIT_M0)
   // I2C on SERCOM1, do not use
   // Serial1 (TX/RX) is on SERCOM5, do not use
@@ -272,238 +267,105 @@ struct {
   &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
 #endif
 
-
-
-
-// WIPs and notes below this line...as items are resolved, move them up
-// -------------------------------------------------------------------------
-
-
 #if defined(ADAFRUIT_CIRCUITPLAYGROUND_M0)
-  // SERCOM0 is allowed, but SD card Gizmo isn't compatible
+  // SERCOM0 is allowed, but SPI-using Gizmos not compatible
   // "Internal" I2C (for LIS3DH) is on SERCOM1, do not use
   // SERCOM2 would be in the clear, but all the MOSI-capable pins are
   // assigned to other tasks: 5 = right, 7 = switch, 26 = IR in
   // SPI FLASH (SPI1) is on SERCOM3, do not use
   // Serial1 (TX/RX) is on SERCOM4, do not use
   // I2C is on SERCOM5, do not use
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    9, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   10, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
+  // Onboard NeoPixels are pin 8 (SERCOM1/PAD[3] or SERCOM5/PAD[3]),
+  // either would interfere with other peripherals, so not supported.
+  // That leaves A2 as the only really safe output, and only then
+  // if not using SPI-centric Gizmos:
   &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A2, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A3, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A8, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,  A10, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   34, SPI_PAD_2_SCK_3, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   35, SPI_PAD_0_SCK_1, PIO_SERCOM,
-
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    5, SPI_PAD_2_SCK_3, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    7, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   A8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   26, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   34, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   35, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-#endif
-
-#if defined(ADAFRUIT_GEMMA_M0)
-  // Serial1 (TX/RX) is on SERCOM0, do not use
-  // SPI is on SERCOM0 also, output-only, can't have both. Mosi is pin 0
-// Why is the script not picking that up?
-// It's PORTA4, which should function as SERCOM0/PAD[0]
-// Pin A0 is 8ul
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,  SDA, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A2, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX, MISO, SPI_PAD_2_SCK_3, PIO_SERCOM,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    7, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX, MISO, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    7, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
 #endif
 
 #if defined(ADAFRUIT_TRINKET_M0)
-  // Serial1 (TX/RX) is on SERCOM0, do not use
-  // SPI also SERCOM0
-  // I2C on SERCOM2
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,  SDA, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,  SCK, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX, MOSI, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    5, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   12, SPI_PAD_2_SCK_3, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   13, SPI_PAD_2_SCK_3, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A2, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A3, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    7, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,  SDA, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    5, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   12, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   13, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   A2, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   10, SPI_PAD_2_SCK_3, PIO_SERCOM,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   10, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
+  // SPI and Serial1 on SERCOM0, I2C on SERCOM2...there's kind of nothing
+  // that DOESN'T interfere with other peripherals, so using either of
+  // these is just sort of a gotcha...
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    4, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
+  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    2, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
 #endif
 
-
-#if defined(ADAFRUIT_PYBADGE_M4_EXPRESS)
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   37, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   40, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    5, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    9, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,  SDA, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   38, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   40, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    9, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   12, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,  SCK, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   31, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   A2, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,  SCL, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   36, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,MOSI1, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,MISO1, SPI_PAD_0_SCK_1, PIO_SERCOM,
-
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    1, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   13, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A6, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A9, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   31, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
+#if defined(ADAFRUIT_GEMMA_M0)
+  // Looks like SPI, Serial1 and I2C all on SERCOM0 (only one can be active),
+  // so using DMA NeoPixels means no special peripherals, sorry.
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    0, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
 #endif
 
-#if defined(ADAFRUIT_PYBADGE_AIRLIFT_M4)
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   37, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   40, SPI_PAD_3_SCK_1, PIO_SERCOM,
+#if defined(USB_PID) && (USB_PID == 0x804d) // ARDUINO ZERO
+  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   12, SPI_PAD_3_SCK_1, PIO_SERCOM,
+  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    5, SPI_PAD_3_SCK_1, PIO_SERCOM,
+  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX, MOSI, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
+#endif // end Arduino Zero
 
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    5, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    9, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM,
+}; // end sercomTable[]
 
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,  SDA, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   38, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   40, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
+#define N_SERCOMS (sizeof sercomTable / sizeof sercomTable[0])
 
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    9, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   12, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,  SCK, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   31, SPI_PAD_3_SCK_1, PIO_SERCOM,
+// NOTE TO FUTURE SELF: avoiding pins used by essential SERCOM peripherals
+// (I2C, Serial) was a design decision to make documentation easier (not
+// having to explain "if you have DMA NeoPixels on this pin, you can't use
+// I2C devices") (exception being the SPI MOSI pin, because the older
+// library handled that on Metro boards and it's not as widely used as I2C).
+// HOWEVER, on many boards where there's only an "external" I2C bus (no
+// onboard sensors or such sharing the bus), it mmmmight be sensible to
+// allow DMA NeoPixels on either the SDA or SCL pins, since the NeoPixels
+// at that point physically block I2C (ditto for the Serial1 TX/RX pins) --
+// it's sort of implied that the peripheral can't be used at the same time,
+// but as implemented right now, it additionally *enforces* not using DMA
+// NeoPixels on those pins (at all, not just when not-using-peripheral).
+// Maybe that's too strict and not necessary. Or maybe the selection of
+// pins here, as-is, adequately covers most situations. Just saying there
+// might be a possibility of having to revisit these tables to add 1-2 more
+// pin options that overlap I2C or Serial1 on boards where those are
+// physically exposed and not shared with onboard peripherals. It's no fun,
+// requires using the pinfinder.py script (in extras directory) and looking
+// for the right missing items to add on a per-board basis.
+// (There's a couple of exceptions in the lists, if a board just has no
+// other SPI-MOSI-DMA-capable pins, one is exposed and will require an
+// asterisk in the docs, that it takes out some other peripheral.)
 
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   A2, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,  SCL, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   36, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,MOSI1, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,MISO1, SPI_PAD_0_SCK_1, PIO_SERCOM,
+// NOTE FOR FUTURE SAMD BOARD DESIGNS: to ensure one or more outwardly-
+// accessible DMA-capable pins, choose a PORT/bit from the datasheet's
+// signal mux table that has a SERCOM or SERCOM-ALT setting that's
+// 1) not an existing SERCOM that's used for a vital peripheral (I2C,
+// Serial1 or SPI, or in the case of certain boards with onboard sensors
+// and a second internal peripheral bus, avoid that bus), and...
+// 2) on PAD[0] or PAD[3], or if it's a SAMD21 part, then PAD[2] also.
 
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    1, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   13, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A6, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A9, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   31, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
+// NOTE FROM PAST SELF: here's the pin table from an earlier version of the
+// library. There were very few SAMD boards at the time so the #ifdef checks
+// are pretty sloppy, and also it was less strict about allowing use on pins
+// tied to other peripherals (like I2C) which would render them useless.
+// The new library is more strict in this regard but is less likely to
+// result in confusion when trying to use both DMA NeoPixels and other
+// devices simultaneously.
+#if 0
+#if defined(ARDUINO_GEMMA_M0)
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    0, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
+#elif defined(ARDUINO_TRINKET_M0)
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    4, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
+#elif defined(ADAFRUIT_CIRCUITPLAYGROUND_M0)
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A2, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
+  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   A7, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
+  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
+#elif defined(__SAMD51__) // Metro M4
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
+  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM,
+  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX, MOSI, SPI_PAD_0_SCK_1, PIO_SERCOM,
+  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
+  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,    6, SPI_PAD_3_SCK_1, PIO_SERCOM,
+  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM,
+#else // Metro M0
+  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   11, SPI_PAD_0_SCK_1, PIO_SERCOM,
+  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    5, SPI_PAD_3_SCK_1, PIO_SERCOM,
+  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   23, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
+  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A5, SPI_PAD_0_SCK_3, PIO_SERCOM_ALT,
 #endif
-
-
-#if defined(ADAFRUIT_PYGAMER_M4_EXPRESS)
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   37, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   40, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    5, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    9, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,  SDA, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   38, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   40, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    9, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   12, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,  SCK, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   33, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   A2, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,  SCL, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   36, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,MOSI1, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    1, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   13, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A6, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A9, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   33, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-#endif
-
-#if defined(ADAFRUIT_PYGAMER_ADVANCE_M4_EXPRESS)
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A4, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   37, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   40, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    5, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,    9, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,  SDA, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   38, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,   40, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    9, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   12, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,  SCK, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   33, SPI_PAD_3_SCK_1, PIO_SERCOM,
-
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,    8, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   A2, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,  SCL, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   36, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,MOSI1, SPI_PAD_0_SCK_1, PIO_SERCOM,
-
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    1, SPI_PAD_0_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   11, SPI_PAD_3_SCK_1, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   13, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A6, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A9, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX, MOSI, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   33, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
-#endif
-
-
-
 #endif // 0
 
-
-// Need something here to catch Arduino Zero (there's no simple define for
-// it), or maybe include that check with the Metro M0 section (same pinout)
-
+#endif // _NEODMA_PINS_H_
