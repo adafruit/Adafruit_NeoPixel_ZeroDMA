@@ -34,6 +34,7 @@ and pins for each).
 
 #include "Adafruit_NeoPixel_ZeroDMA.h"
 #include "bittable.h"       // Optional, see comments in show()
+#include "pins.h"           // SPI DMA capable pin tables (per device)
 #include "wiring_private.h" // pinPeripheral() function
 
 /** @brief Initialize a NeoPixel strand
@@ -65,73 +66,19 @@ Adafruit_NeoPixel_ZeroDMA::~Adafruit_NeoPixel_ZeroDMA() {
     free(dmaBuf);
 }
 
-/*
-This table contains the available pins and their corresponding SERCOMs and
-DMA-related registers and such.  M0 can actually handle SPI DMA on more
-pins than are indicated here, but the code design INTENTIONALLY limits it
-to specific pins.  This is not a technical limit, but a documentation issue.
-There are usually multiple pins available for each SERCOM, but each SERCOM
-can have only one active MOSI pin.  Rather than try to document "If you use
-in X, then pins Y and Z can't be used" (and repeating this explanation for
-up to four SERCOMs, and that the specific pins can vary for each board),
-it's 10,000X SIMPLER to explain and use if one specific pin has been
-preselected for each SERCOM.  I tried to pick pins that are nicely spaced
-around the board and don't knock out other vital peripherals.  SERCOM pin
-selection is NOT a fun process, believe me, it's much easier this way...
-*/
-// clang-format off
-struct {
-  SERCOM        *sercom;
-  Sercom        *sercomBase;
-  uint8_t        dmacID, mosi, miso, sck;
-  SercomSpiTXPad padTX;
-  SercomRXPad    padRX;
-  EPioType       pinFunc;
-} sercomTable[] = {
-#if defined(ARDUINO_GEMMA_M0)
-//                                       mosi  miso  sck  padTX            padRX            pinFunc
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    0,   14,   2, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
-#elif defined(ARDUINO_TRINKET_M0)
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    4,    2,   3, SPI_PAD_2_SCK_3, SERCOM_RX_PAD_1, PIO_SERCOM_ALT,
-#elif defined(ADAFRUIT_CIRCUITPLAYGROUND_M0)
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    8,   A5,  A4, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_0, PIO_SERCOM_ALT,
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A2,   A9,  A3, SPI_PAD_2_SCK_3, SERCOM_RX_PAD_1, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   A7,    5,  A6, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
-#elif defined(__SAMD51__) // Metro M4
-  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A3,   A2,  A1, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   11,   10,  12, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX, MOSI, MISO, SCK, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM,
-  &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    8,    9,  13, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,    6,    7,   4, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_0, PIO_SERCOM,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    3,    9,   2, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2, PIO_SERCOM,
-#else // Metro M0
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    5,    3,   2, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_1, PIO_SERCOM,
-  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   11,   12,  13, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_3, PIO_SERCOM,
-  &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX,   23,   22,  24, SPI_PAD_2_SCK_3, SERCOM_RX_PAD_0, PIO_SERCOM_ALT,
-  &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,   A5,    6,   7, SPI_PAD_0_SCK_3, SERCOM_RX_PAD_2, PIO_SERCOM_ALT,
-#endif
-};
-// clang-format on
-
-#define N_SERCOMS (sizeof(sercomTable) / sizeof(sercomTable[0]))
-
 /** @brief Initialize the underlying SPI SERCOM for DMA transfers
     @param sercom Pointer to the underlying SERCOM from the Arduino core
-    @param sercomBase the ASF Sercom register
+    @param sercomBase the 'raw' Sercom register base address
     @param dmacID the DMAC id that matches the TX for the sercom (check DS)
     @param mosi The MOSI pin (where we send data to the neopixel)
-    @param miso The MISO pin for the sercom (required even tho not used)
-    @param sck The SCK pin for the sercom (required even tho not used)
     @param padTX the pinmux set up for SPI SERCOM pin config
-    @param padRX the pinmux set up for SPI SERCOM pin config
     @param pinFunc The pinmux setup for which 'type' of pinmux we use
     @returns True or false on success
 */
 boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
                                           uint8_t dmacID, uint8_t mosi,
-                                          uint8_t miso, uint8_t sck,
                                           SercomSpiTXPad padTX,
-                                          SercomRXPad padRX, EPioType pinFunc) {
+                                          EPioType pinFunc) {
 
   if (mosi != pin)
     return false; // Invalid pin
@@ -156,12 +103,63 @@ boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
   uint8_t bytesPerPixel = (wOffset == rOffset) ? 3 : 4;
   uint32_t bytesTotal = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
   if ((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
-#ifdef SPI
-    spi = (pin == 23) ? &SPI :
-#else
-    spi =
+    spi = NULL; // No SPIClass assigned yet,
+    // check MOSI pin against existing defined SPI SERCOMs...
+#if SPI_INTERFACES_COUNT > 0
+    if (pin == PIN_SPI_MOSI) { // If NeoPixel pin is main SPI MOSI...
+      spi   = &SPI;            // Use the existing SPIClass object
+      padTX = PAD_SPI_TX;
+    }
 #endif
-                      new SPIClass(sercom, miso, sck, mosi, padTX, padRX);
+#if SPI_INTERFACES_COUNT > 1
+    else if (pin == PIN_SPI1_MOSI) { // If NeoPixel pin is secondary SPI MOSI...
+      spi   = &SPI1;            // Use the SPI1 SPIClass object
+      padTX = PAD_SPI1_TX;
+    }
+#endif
+#if SPI_INTERFACES_COUNT > 2
+    else if (pin == PIN_SPI2_MOSI) { // Ditto, tertiary SPI
+      spi   = &SPI2;
+      padTX = PAD_SPI2_TX;
+    }
+#endif
+#if SPI_INTERFACES_COUNT > 3
+    else if (pin == PIN_SPI3_MOSI) {
+      spi   = &SPI3;
+      padTX = PAD_SPI3_TX;
+    }
+#endif
+#if SPI_INTERFACES_COUNT > 4
+    else if (pin == PIN_SPI4_MOSI) {
+      spi   = &SPI4;
+      padTX = PAD_SPI4_TX;
+    }
+#endif
+#if SPI_INTERFACES_COUNT > 5
+    else if (pin == PIN_SPI5_MOSI) {
+      spi   = &SPI5;
+      padTX = PAD_SPI5_TX;
+    }
+#endif
+    // If NeoPixel pin is not an existing SPI SERCOM, allocate a new one.
+    if (spi == NULL) {
+      // DIRTY POOL! The SPIClass constructor expects MISO, SCK and MOSI
+      // pins, in that order. Our library only intends to ever use the MOSI
+      // output, the others are never even set to SERCOM periph functions.
+      // We just give the SPI constructor THE SAME PIN NUMBER for all three.
+      // The SPI lib never checks if they're distinct and valid for each of
+      // the three. It does set pinPeripheral for each (or in this case,
+      // the same for the MOSI pin three times)...but no matter, we set our
+      // own pinPeripheral below. The SPI RX PAD also doesn't matter...we
+      // always claim it's PAD 1 here, because (by hardware design) the TX
+      // pad will always be 0, 2 or 3...this might collide with the SCK PAD
+      // value, but we don't care, neither SCK nor MISO is actually used.
+      // (This is tested across many SAMD devices and works, but it's
+      // conceivable that this could fail spectacularly on some unforseen
+      // future device, if the SERCOM pad assignment becomes hardwarily
+      // strict.)
+      spi = new SPIClass(sercom, mosi, mosi, mosi, padTX, SERCOM_RX_PAD_1);
+    }
     if ((spi)) {
       spi->begin();
       pinPeripheral(mosi, pinFunc);
@@ -186,11 +184,44 @@ boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
         }
         dma.free();
       }
-#ifdef SPI
-      if (spi != &SPI)
-        delete spi;
+      // Delete SPIClass object, UNLESS it's an existing (Arduino-defined) one
+#if SPI_INTERFACES_COUNT > 0
+      if (spi == &SPI) {
+        spi = NULL;
+      }
 #endif
-      spi = NULL;
+#if SPI_INTERFACES_COUNT > 1
+      else if (spi == &SPI1) {
+        spi = NULL;
+      }
+#endif
+#if SPI_INTERFACES_COUNT > 2
+      else if (spi == &SPI2) {
+        spi = NULL;
+      }
+#endif
+#if SPI_INTERFACES_COUNT > 3
+      else if (spi == &SPI3) {
+        spi = NULL;
+      }
+#endif
+#if SPI_INTERFACES_COUNT > 4
+      else if (spi == &SPI4) {
+        spi = NULL;
+      }
+#endif
+#if SPI_INTERFACES_COUNT > 5
+      else if (spi == &SPI5) {
+        spi = NULL;
+      }
+#endif
+
+#ifdef SPI
+      if (spi != NULL) {
+        delete spi;
+        spi = NULL;
+      }
+#endif
     }
     free(dmaBuf);
     dmaBuf = NULL;
@@ -316,9 +347,8 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
   toggleMask = 0; // Using library's normal SERCOM DMA technique
 #endif
   return _begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
-                sercomTable[i].dmacID, sercomTable[i].mosi, sercomTable[i].miso,
-                sercomTable[i].sck, sercomTable[i].padTX, sercomTable[i].padRX,
-                sercomTable[i].pinFunc);
+                sercomTable[i].dmacID, sercomTable[i].mosi,
+                sercomTable[i].padTX, sercomTable[i].pinFunc);
 }
 
 /** @brief Convert the NeoPixel buffer to larger DMA buffer and start xfer
