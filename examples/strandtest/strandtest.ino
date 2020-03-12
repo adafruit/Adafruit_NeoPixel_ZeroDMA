@@ -16,7 +16,7 @@
    Metro M0 or Arduino Zero: pins 5, 12 and MOSI*.
    Metro M4: pins 6, 11, A3 and MOSI*.
    Metro M4 AirLift: pins 6, 11 and MOSI*.
-   Grand Central: pins 11, 23 and MOSI*.
+   Grand Central: pins 11, 14, 23 and MOSI*.
    HalloWing M0: pins 4 (NEOPIX), 6 and MOSI*.
    HalloWing M4: pins 6, 8, A5 and MOSI*.
    MONSTER M4SK: pin 2.
