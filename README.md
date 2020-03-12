@@ -18,28 +18,28 @@ supported now.
 
 COMPATIBLE BOARDS AND PINS:
 
-Feather M0: pins 5, 6, 12 and MOSI*.
-Feather M0 Express: pins 6, 12 and MOSI*.
-Feather M4: pins 12, A2, A4 and MOSI*.
-ItsyBitsy M0: pins 5, 12 and MOSI*.
-ItsyBitsy M4: pins 2, 5, 12 and MOSI*.
-Metro M0 or Arduino Zero: pins 5, 12 and MOSI*.
-Metro M4: pins 6, 11, A3 and MOSI*.
-Metro M4 AirLift: pins 6, 11 and MOSI*.
-Grand Central: pins 11, 14, 23 and MOSI*.
-HalloWing M0: pins 4 (NEOPIX), 6 and MOSI*.
-HalloWing M4: pins 6, 8, A5 and MOSI*.
-MONSTER M4SK: pin 2.
-PyPortal, PyPortal Titano: pin 3 (SENSE connector).
-PyGamer, PyGamer Advance: pins 12 and A4.
-PyBadge, PyBadge AirLift: pins A4, MOSI*.
-Crickit M0: pins 8, 11, A8 and A11.
-Trellis M4: pin 10 (keypad NeoPixels).
-Circuit Playground M0: pin A2.
-Trinket M0: pin 4 (can't use simultaneously with I2C, SPI or Serial1).
-Gemma M0: pin D0 (can't use simultaneously with I2C, SPI or Serial1).
+* Feather M0: pins 5, 6, 12 and MOSI*\.
+* Feather M0 Express: pins 6, 12 and MOSI\*.
+* Feather M4: pins 12, A2, A4 and MOSI\*.
+* ItsyBitsy M0: pins 5, 12 and MOSI\*.
+* ItsyBitsy M4: pins 2, 5, 12 and MOSI\*.
+* Metro M0 or Arduino Zero: pins 5, 12 and MOSI\*.
+* Metro M4: pins 6, 11, A3 and MOSI\*.
+* Metro M4 AirLift: pins 6, 11 and MOSI\*.
+* Grand Central: pins 11, 14, 23 and MOSI\*.
+* HalloWing M0: pins 4 (NEOPIX), 6 and MOSI\*.
+* HalloWing M4: pins 6, 8, A5 and MOSI\*.
+* MONSTER M4SK: pin 2.
+* PyPortal, PyPortal Titano: pin 3 (SENSE connector).
+* PyGamer, PyGamer Advance: pins 12 and A4.
+* PyBadge, PyBadge AirLift: pins A4, MOSI\*.
+* Crickit M0: pins 8, 11, A8 and A11.
+* Trellis M4: pin 10 (keypad NeoPixels).
+* Circuit Playground M0: pin A2.
+* Trinket M0: pin 4 (can't use simultaneously with I2C, SPI or Serial1).
+* Gemma M0: pin D0 (can't use simultaneously with I2C, SPI or Serial1).
 
-* If using the MOSI pin on these boards, the corresponding SPI peripheral is
+\* If using the MOSI pin on these boards, the corresponding SPI peripheral is
 not usable. A few add-ons (usually TFT display shields/wings) rely on SPI,
 so avoid NeoPixeling from this pin in such situations. MOSI is really only
 offered anymore to maintain partial compatibility with older projects that
