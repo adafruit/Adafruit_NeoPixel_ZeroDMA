@@ -109,9 +109,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a242549d8bb6bce2b265641053703c2a9"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_adafruit___neo_pixel___zero_d_m_a.html#a242549d8bb6bce2b265641053703c2a9">_begin</a> (SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, uint8_t mosi, SercomSpiTXPad padTX, EPioType pinFunc)</td></tr>
-<tr class="memdesc:a242549d8bb6bce2b265641053703c2a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the underlying SPI SERCOM for DMA transfers.  <a href="#a242549d8bb6bce2b265641053703c2a9">More...</a><br /></td></tr>
-<tr class="separator:a242549d8bb6bce2b265641053703c2a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ae6b17aa22f87469cf3550c5cde129f"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_adafruit___neo_pixel___zero_d_m_a.html#a0ae6b17aa22f87469cf3550c5cde129f">_begin</a> (SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, uint8_t mosi, uint8_t miso, uint8_t sck, SercomSpiTXPad padTX, SercomRXPad padRX, EPioType pinFunc)</td></tr>
+<tr class="memdesc:a0ae6b17aa22f87469cf3550c5cde129f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the underlying SPI SERCOM for DMA transfers.  <a href="#a0ae6b17aa22f87469cf3550c5cde129f">More...</a><br /></td></tr>
+<tr class="separator:a0ae6b17aa22f87469cf3550c5cde129f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -277,8 +277,8 @@ uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
 
 </div>
 </div>
-<a id="a242549d8bb6bce2b265641053703c2a9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a242549d8bb6bce2b265641053703c2a9">&#9670;&nbsp;</a></span>_begin()</h2>
+<a id="a0ae6b17aa22f87469cf3550c5cde129f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ae6b17aa22f87469cf3550c5cde129f">&#9670;&nbsp;</a></span>_begin()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -313,8 +313,26 @@ uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>miso</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>sck</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">SercomSpiTXPad&#160;</td>
           <td class="paramname"><em>padTX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SercomRXPad&#160;</td>
+          <td class="paramname"><em>padRX</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -339,10 +357,13 @@ uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">sercom</td><td>Pointer to the underlying SERCOM from the Arduino core </td></tr>
-    <tr><td class="paramname">sercomBase</td><td>the 'raw' Sercom register base address </td></tr>
+    <tr><td class="paramname">sercomBase</td><td>the ASF Sercom register </td></tr>
     <tr><td class="paramname">dmacID</td><td>the DMAC id that matches the TX for the sercom (check DS) </td></tr>
     <tr><td class="paramname">mosi</td><td>The MOSI pin (where we send data to the neopixel) </td></tr>
+    <tr><td class="paramname">miso</td><td>The MISO pin for the sercom (required even tho not used) </td></tr>
+    <tr><td class="paramname">sck</td><td>The SCK pin for the sercom (required even tho not used) </td></tr>
     <tr><td class="paramname">padTX</td><td>the pinmux set up for SPI SERCOM pin config </td></tr>
+    <tr><td class="paramname">padRX</td><td>the pinmux set up for SPI SERCOM pin config </td></tr>
     <tr><td class="paramname">pinFunc</td><td>The pinmux setup for which 'type' of pinmux we use </td></tr>
   </table>
   </dd>
