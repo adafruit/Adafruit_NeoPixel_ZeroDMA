@@ -276,9 +276,12 @@ MUX = [
 
 # Given a variant.h filename, look for items that might indicate the first
 # analog pin number (these are always "above" the digital pin numbers in
-# Arduino), and the number of analog pins...above this total, any pins are
+# Arduino*), and the number of analog pins...above this total, any pins are
 # usually very special functions like debug pins or QSPI and should totally
 # be avoided as possible outputs.
+# * Not necessarily true. Grand Central has "Additional ADC" below the
+#   main analog pins. This kind of botched the output for that board and
+#   it'll probably need revisiting.
 def boardpins(headerfile):
     headerlines = [line.rstrip() for line in open(headerfile)]
     num_analog_inputs = 0

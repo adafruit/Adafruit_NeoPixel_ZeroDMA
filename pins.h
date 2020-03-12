@@ -176,6 +176,10 @@ struct {
   // same concern. THEREFORE, you get a choice: SPI interface to hardware on
   // the FeatherWing header -or- DMA out on MOSI pin -or- DMA NEOPIX jack
   // -or- DMA onboard pixels. ONLY ONE OF THESE.
+  // UPDATE: pin 3 (the NEOPIX connector) does NOT work with DMA.
+  // Not sure where the problem lies, have checked against datasheet
+  // and that pin (PB02) SHOULD operate as SERCOM5/PAD[0]. I'll leave
+  // it in the code for now, but avoid it in examples, README and docs.
   &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A5, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
   &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,    6, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
   &sercom5, SERCOM5, SERCOM5_DMAC_ID_TX,    3, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
@@ -283,11 +287,9 @@ struct {
 #endif
 
 #if defined(ADAFRUIT_TRINKET_M0)
-  // SPI and Serial1 on SERCOM0, I2C on SERCOM2...there's kind of nothing
-  // that DOESN'T interfere with other peripherals, so using either of
-  // these is just sort of a gotcha...
+  // Looks like SPI, Serial1 and I2C all on SERCOM0 (only one can be active),
+  // so using DMA NeoPixels means no special peripherals, sorry.
   &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    4, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
-  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    2, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
 #endif
 
 #if defined(ADAFRUIT_GEMMA_M0)

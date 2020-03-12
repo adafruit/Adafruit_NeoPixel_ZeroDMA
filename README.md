@@ -26,17 +26,18 @@ ItsyBitsy M4: pins 2, 5, 12 and MOSI*.
 Metro M0 or Arduino Zero: pins 5, 12 and MOSI*.
 Metro M4: pins 6, 11, A3 and MOSI*.
 Metro M4 AirLift: pins 6, 11 and MOSI*.
-Grand Central: pins 11, 23, A12 and MOSI*.
-HalloWing M0: pins 4, 6 and MOSI*.
-HalloWing M4: pins 3, 6, 8, A5 and MOSI*.
+Grand Central: pins 11, 23 and MOSI*.
+HalloWing M0: pins 4 (NEOPIX), 6 and MOSI*.
+HalloWing M4: pins 6, 8, A5 and MOSI*.
 MONSTER M4SK: pin 2.
 PyPortal, PyPortal Titano: pin 3 (SENSE connector).
 PyGamer, PyGamer Advance: pins 12 and A4.
 PyBadge, PyBadge AirLift: pins A4, MOSI*.
 Crickit M0: pins 8, 11, A8 and A11.
+Trellis M4: pin 10 (keypad NeoPixels).
 Circuit Playground M0: pin A2.
-Trinket M0: pins 2 and 4 (can't use simultaneously with I2C, SPI or Serial1).
-Gemma M0: pin 0 (can't use simultaneously with I2C, SPI or Serial1).
+Trinket M0: pin 4 (can't use simultaneously with I2C, SPI or Serial1).
+Gemma M0: pin D0 (can't use simultaneously with I2C, SPI or Serial1).
 
 * If using the MOSI pin on these boards, the corresponding SPI peripheral is
 not usable. A few add-ons (usually TFT display shields/wings) rely on SPI,

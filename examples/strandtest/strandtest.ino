@@ -7,14 +7,33 @@
 
 #include <Adafruit_NeoPixel_ZeroDMA.h>
 
-// DMA NeoPixels work ONLY on SPECIFIC PINS.
-// On Circuit Playground Express: 8, A2 and A7 (TX) are valid.
-// On Feather M0, Arduino Zero, etc.: 5, 11, A5 and 23 (SPI MOSI).
-// On GEMMA M0: pin 0.
-// On Trinket M0: pin 4.
-// On Metro M4: 3, 6, 8, 11, A3 and MOSI
-#define PIN         8
-#define NUM_PIXELS 10
+/* DMA NeoPixels work ONLY on SPECIFIC PINS:
+   Feather M0: pins 5, 6, 12 and MOSI*.
+   Feather M0 Express: pins 6, 12 and MOSI*.
+   Feather M4: pins 12, A2, A4 and MOSI*.
+   ItsyBitsy M0: pins 5, 12 and MOSI*.
+   ItsyBitsy M4: pins 2, 5, 12 and MOSI*.
+   Metro M0 or Arduino Zero: pins 5, 12 and MOSI*.
+   Metro M4: pins 6, 11, A3 and MOSI*.
+   Metro M4 AirLift: pins 6, 11 and MOSI*.
+   Grand Central: pins 11, 23 and MOSI*.
+   HalloWing M0: pins 4 (NEOPIX), 6 and MOSI*.
+   HalloWing M4: pins 6, 8, A5 and MOSI*.
+   MONSTER M4SK: pin 2.
+   PyPortal, PyPortal Titano: pin 3 (SENSE connector).
+   PyGamer, PyGamer Advance: pins 12 and A4.
+   PyBadge, PyBadge AirLift: pins A4, MOSI*.
+   Crickit M0: pins 8, 11, A8 and A11.
+   Trellis M4: pin 10 (keypad NeoPixels).
+   Circuit Playground M0: pin A2.
+   Trinket M0: pin 4 (can't use with I2C, SPI or Serial1 active).
+   Gemma M0: pin D0 (can't use with I2C, SPI or Serial1 active).
+   * If using the MOSI pin on these boards, the corresponding SPI
+     peripheral is not usable.
+*/
+
+#define PIN        12
+#define NUM_PIXELS 30
 
 Adafruit_NeoPixel_ZeroDMA strip(NUM_PIXELS, PIN, NEO_GRB);
 
@@ -42,25 +61,11 @@ void loop() {
     t       = micros();
     elapsed = t - startTime;
     if(elapsed > 5000000) break; // Run for 5 seconds
+    uint32_t firstPixelHue = elapsed / 32;
     for(i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel((uint8_t)(
-        (elapsed * 256 / 1000000) + i * 256 / strip.numPixels())));
+      uint32_t pixelHue = firstPixelHue + (i * 65536L / strip.numPixels());
+      strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(pixelHue)));
     }
     strip.show();
   }
-}
-
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
-uint32_t Wheel(byte WheelPos) {
-  WheelPos = 255 - WheelPos;
-  if(WheelPos < 85) {
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  }
-  if(WheelPos < 170) {
-    WheelPos -= 85;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-  WheelPos -= 170;
-  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
