@@ -18,6 +18,7 @@ setBrightness	KEYWORD2
 getBrightness	KEYWORD2
 canShow	KEYWORD2
 
+
 #######################################
 # Instances (KEYWORD2)
 #######################################

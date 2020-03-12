@@ -40,8 +40,7 @@ protected:
 #endif
 
   boolean _begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID,
-                 uint8_t mosi, uint8_t miso, uint8_t sck, SercomSpiTXPad padTX,
-                 SercomRXPad padRX, EPioType pinFunc);
+                 uint8_t mosi, SercomSpiTXPad padTX, EPioType pinFunc);
 };
 
 #endif // _ADAFRUIT_NEOPIXEL_ZERODMA_H_
