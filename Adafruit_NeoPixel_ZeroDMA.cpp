@@ -104,40 +104,40 @@ boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
   uint32_t bytesTotal = (numLEDs * bytesPerPixel * 8 * 3 + 7) / 8 + 90;
   if ((dmaBuf = (uint8_t *)malloc(bytesTotal))) {
     spi = NULL; // No SPIClass assigned yet,
-    // check MOSI pin against existing defined SPI SERCOMs...
+                // check MOSI pin against existing defined SPI SERCOMs...
 #if SPI_INTERFACES_COUNT > 0
     if (pin == PIN_SPI_MOSI) { // If NeoPixel pin is main SPI MOSI...
-      spi   = &SPI;            // Use the existing SPIClass object
+      spi = &SPI;              // Use the existing SPIClass object
       padTX = PAD_SPI_TX;
     }
 #endif
 #if SPI_INTERFACES_COUNT > 1
-    else if (pin == PIN_SPI1_MOSI) { // If NeoPixel pin is secondary SPI MOSI...
-      spi   = &SPI1;            // Use the SPI1 SPIClass object
+    else if (pin == PIN_SPI1_MOSI) { // If NeoPixel pin = secondary SPI MOSI...
+      spi = &SPI1;                   // Use the SPI1 SPIClass object
       padTX = PAD_SPI1_TX;
     }
 #endif
 #if SPI_INTERFACES_COUNT > 2
     else if (pin == PIN_SPI2_MOSI) { // Ditto, tertiary SPI
-      spi   = &SPI2;
+      spi = &SPI2;
       padTX = PAD_SPI2_TX;
     }
 #endif
 #if SPI_INTERFACES_COUNT > 3
     else if (pin == PIN_SPI3_MOSI) {
-      spi   = &SPI3;
+      spi = &SPI3;
       padTX = PAD_SPI3_TX;
     }
 #endif
 #if SPI_INTERFACES_COUNT > 4
     else if (pin == PIN_SPI4_MOSI) {
-      spi   = &SPI4;
+      spi = &SPI4;
       padTX = PAD_SPI4_TX;
     }
 #endif
 #if SPI_INTERFACES_COUNT > 5
     else if (pin == PIN_SPI5_MOSI) {
-      spi   = &SPI5;
+      spi = &SPI5;
       padTX = PAD_SPI5_TX;
     }
 #endif
