@@ -75,10 +75,10 @@ Adafruit_NeoPixel_ZeroDMA::~Adafruit_NeoPixel_ZeroDMA() {
     @param pinFunc The pinmux setup for which 'type' of pinmux we use
     @returns True or false on success
 */
-boolean Adafruit_NeoPixel_ZeroDMA::_begin(SERCOM *sercom, Sercom *sercomBase,
-                                          uint8_t dmacID, uint8_t mosi,
-                                          SercomSpiTXPad padTX,
-                                          EPioType pinFunc) {
+boolean Adafruit_NeoPixel_ZeroDMA::begin(SERCOM *sercom, Sercom *sercomBase,
+                                         uint8_t dmacID, uint8_t mosi,
+                                         SercomSpiTXPad padTX,
+                                         EPioType pinFunc) {
 
   if (mosi != pin)
     return false; // Invalid pin
@@ -346,9 +346,9 @@ boolean Adafruit_NeoPixel_ZeroDMA::begin(void) {
 #ifdef __SAMD51__
   toggleMask = 0; // Using library's normal SERCOM DMA technique
 #endif
-  return _begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
-                sercomTable[i].dmacID, sercomTable[i].mosi,
-                sercomTable[i].padTX, sercomTable[i].pinFunc);
+  return begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
+               sercomTable[i].dmacID, sercomTable[i].mosi,
+               sercomTable[i].padTX, sercomTable[i].pinFunc);
 }
 
 /** @brief Convert the NeoPixel buffer to larger DMA buffer and start xfer
