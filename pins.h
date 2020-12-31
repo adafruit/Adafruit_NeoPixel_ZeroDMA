@@ -298,6 +298,17 @@ struct {
   &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    0, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
 #endif
 
+#if defined(ADAFRUIT_QTPY_M0)
+  // All of the pins NeoPixels can use for DMA (SDA/D4, TX/A6/D6, MO/A10/D10)
+  // are also needed for other peripherals (I2C, Serial1, SPI, respectively),
+  // so using any of them means giving up the type of peripheral associated 
+  // with that pin. Given that other boards allow an option of using MOSI pin
+  // (but losing SPI in the process), the most reasonable tradeoff for DMA
+  // NeoPixels on the QT PY is probably SPI. So, using DMA NeoPixels means
+  // no SPI peripherals, sorry.
+  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX, MOSI, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
+#endif  
+
 #if defined(USB_PID) && (USB_PID == 0x804d) // ARDUINO ZERO
   &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   12, SPI_PAD_3_SCK_1, PIO_SERCOM,
   &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    5, SPI_PAD_3_SCK_1, PIO_SERCOM,
