@@ -28,6 +28,7 @@
    Circuit Playground M0: pin A2.
    Trinket M0: pin 4 (can't use with I2C, SPI or Serial1 active).
    Gemma M0: pin D0 (can't use with I2C, SPI or Serial1 active).
+   QT Py: MOSI* and pin 16 (underside pad, can't use w/optional SPI flash).
    * If using the MOSI pin on these boards, the corresponding SPI
      peripheral is not usable.
 */

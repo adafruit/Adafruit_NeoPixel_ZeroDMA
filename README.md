@@ -18,7 +18,7 @@ supported now.
 
 COMPATIBLE BOARDS AND PINS:
 
-* Feather M0: pins 5, 6, 12 and MOSI*\.
+* Feather M0: pins 5, 6, 12 and MOSI\*.
 * Feather M0 Express: pins 6, 12 and MOSI\*.
 * Feather M4: pins 12, A2, A4 and MOSI\*.
 * ItsyBitsy M0: pins 5, 12 and MOSI\*.
@@ -38,6 +38,7 @@ COMPATIBLE BOARDS AND PINS:
 * Circuit Playground M0: pin A2.
 * Trinket M0: pin 4 (can't use simultaneously with I2C, SPI or Serial1).
 * Gemma M0: pin D0 (can't use simultaneously with I2C, SPI or Serial1).
+* QT Py: MOSI\* and pin 16 (underside pad, can't use w/optional SPI flash).
 
 \* If using the MOSI pin on these boards, the corresponding SPI peripheral is
 not usable. A few add-ons (usually TFT display shields/wings) rely on SPI,
