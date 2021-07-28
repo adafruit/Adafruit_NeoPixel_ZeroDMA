@@ -313,6 +313,11 @@ struct {
   &sercom3, SERCOM3, SERCOM3_DMAC_ID_TX,   16, SPI_PAD_0_SCK_1, PIO_SERCOM,
 #endif  
 
+#if defined(ADAFRUIT_NEOKEYTRINKEY_M0)
+  // Onboard NeoPixel
+  &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    0, SPI_PAD_3_SCK_1, PIO_SERCOM,
+#endif  
+
 #if defined(USB_PID) && (USB_PID == 0x804d) // ARDUINO ZERO
   &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX,   12, SPI_PAD_3_SCK_1, PIO_SERCOM,
   &sercom2, SERCOM2, SERCOM2_DMAC_ID_TX,    5, SPI_PAD_3_SCK_1, PIO_SERCOM,
