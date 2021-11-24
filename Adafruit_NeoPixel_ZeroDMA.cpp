@@ -76,9 +76,8 @@ Adafruit_NeoPixel_ZeroDMA::~Adafruit_NeoPixel_ZeroDMA() {
     @returns True or false on success
 */
 bool Adafruit_NeoPixel_ZeroDMA::begin(SERCOM *sercom, Sercom *sercomBase,
-                                          uint8_t dmacID, uint8_t mosi,
-                                          SercomSpiTXPad padTX,
-                                          EPioType pinFunc) {
+                                      uint8_t dmacID, uint8_t mosi,
+                                      SercomSpiTXPad padTX, EPioType pinFunc) {
 
   if (mosi != pin)
     return false; // Invalid pin
@@ -347,8 +346,8 @@ bool Adafruit_NeoPixel_ZeroDMA::begin(void) {
   toggleMask = 0; // Using library's normal SERCOM DMA technique
 #endif
   return begin(sercomTable[i].sercom, sercomTable[i].sercomBase,
-                sercomTable[i].dmacID, sercomTable[i].mosi,
-                sercomTable[i].padTX, sercomTable[i].pinFunc);
+               sercomTable[i].dmacID, sercomTable[i].mosi, sercomTable[i].padTX,
+               sercomTable[i].pinFunc);
 }
 
 /** @brief Convert the NeoPixel buffer to larger DMA buffer and start xfer
