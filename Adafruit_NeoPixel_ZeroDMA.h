@@ -40,7 +40,6 @@ protected:
   // that matrix, not arbitrary-length strips, so the waste is localized.
   uint8_t toggleMask; // Port bit to toggle
 #endif
-
 };
 
 #endif // _ADAFRUIT_NEOPIXEL_ZERODMA_H_
