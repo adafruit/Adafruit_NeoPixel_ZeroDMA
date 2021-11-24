@@ -16,8 +16,8 @@ public:
   ~Adafruit_NeoPixel_ZeroDMA();
 
   bool begin(void);
-  bool begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID,
-                 uint8_t mosi, SercomSpiTXPad padTX, EPioType pinFunc);
+  bool begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, uint8_t mosi,
+             SercomSpiTXPad padTX, EPioType pinFunc);
   void show();
   void setBrightness(uint8_t);
   uint8_t getBrightness() const;
