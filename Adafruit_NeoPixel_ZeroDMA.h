@@ -16,6 +16,8 @@ public:
   ~Adafruit_NeoPixel_ZeroDMA();
 
   bool begin(void);
+  // Although esoteric, there IS a use case for keeping this overloaded
+  // begin() variant public, please DO NOT move to the protected section.
   bool begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, uint8_t mosi,
              SercomSpiTXPad padTX, EPioType pinFunc);
   void show();
