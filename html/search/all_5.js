@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['getbrightness',['getBrightness',['../class_adafruit___neo_pixel___zero_d_m_a.html#abb08d3391e61f415d11ffa82476952dd',1,'Adafruit_NeoPixel_ZeroDMA']]]
+  ['setbrightness',['setBrightness',['../class_adafruit___neo_pixel___zero_d_m_a.html#ab06eaed8d91f83a1d9e5dd855b89ea15',1,'Adafruit_NeoPixel_ZeroDMA']]],
+  ['show',['show',['../class_adafruit___neo_pixel___zero_d_m_a.html#ae26569c2ebec9634f7ab971c3432ef4f',1,'Adafruit_NeoPixel_ZeroDMA']]],
+  ['spi',['spi',['../class_adafruit___neo_pixel___zero_d_m_a.html#a572828a2d660ac96fd43008193594dd3',1,'Adafruit_NeoPixel_ZeroDMA']]]
 ];

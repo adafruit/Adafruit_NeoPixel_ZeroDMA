@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['adafruit_5fneopixel_5fzerodma',['Adafruit_NeoPixel_ZeroDMA',['../class_adafruit___neo_pixel___zero_d_m_a.html#a07ef047f3756694fd67da32e672a1992',1,'Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(uint16_t n, uint8_t p=6, neoPixelType t=NEO_GRB)'],['../class_adafruit___neo_pixel___zero_d_m_a.html#ae3af5074d87bf0d17dc781c6b0c4ea7a',1,'Adafruit_NeoPixel_ZeroDMA::Adafruit_NeoPixel_ZeroDMA(void)']]]
+  ['begin',['begin',['../class_adafruit___neo_pixel___zero_d_m_a.html#a5e782ff8fb4a8c9ef15d71978e01499b',1,'Adafruit_NeoPixel_ZeroDMA::begin(void)'],['../class_adafruit___neo_pixel___zero_d_m_a.html#a5fc3f351b1c8bbd14b4ed05f9c5554ab',1,'Adafruit_NeoPixel_ZeroDMA::begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, uint8_t mosi, SercomSpiTXPad padTX, EPioType pinFunc)']]]
 ];
