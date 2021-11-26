@@ -15,7 +15,9 @@ public:
   Adafruit_NeoPixel_ZeroDMA(void);
   ~Adafruit_NeoPixel_ZeroDMA();
 
-  boolean begin(void);
+  bool begin(void);
+  bool begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID, uint8_t mosi,
+             SercomSpiTXPad padTX, EPioType pinFunc);
   void show();
   void setBrightness(uint8_t);
   uint8_t getBrightness() const;
@@ -38,9 +40,6 @@ protected:
   // that matrix, not arbitrary-length strips, so the waste is localized.
   uint8_t toggleMask; // Port bit to toggle
 #endif
-
-  boolean _begin(SERCOM *sercom, Sercom *sercomBase, uint8_t dmacID,
-                 uint8_t mosi, SercomSpiTXPad padTX, EPioType pinFunc);
 };
 
 #endif // _ADAFRUIT_NEOPIXEL_ZERODMA_H_
