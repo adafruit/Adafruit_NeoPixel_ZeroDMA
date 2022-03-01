@@ -5,6 +5,13 @@
 #include <Adafruit_ZeroDMA.h>
 #include <SPI.h>
 
+// For Adafruit SAMD boards, alias SPIClassSAMD to SPIClass so the
+// same code works on Arduino or Adafruit SAMD boards (hardware SPI
+// is implemented a bit different on each now).
+#ifdef ARDUINO_SAMD_ADAFRUIT
+typedef SPIClass SPIClassSAMD;
+#endif
+
 /** @brief Create a NeoPixel class that uses SPI DMA to write strands in
     a non-blocking manner */
 class Adafruit_NeoPixel_ZeroDMA : public Adafruit_NeoPixel {
@@ -31,7 +38,7 @@ public:
 
 protected:
   Adafruit_ZeroDMA dma; ///< The DMA manager for the SPI class
-  SPIClass *spi;        ///< Underlying SPI hardware interface we use to DMA
+  SPIClassSAMD *spi;    ///< Underlying SPI hardware interface we use to DMA
   uint8_t *dmaBuf;      ///< The raw buffer we write to SPI to mimic NeoPixel
   uint16_t brightness;  ///<  1 (off) to 256 (brightest)
 #ifdef __SAMD51__

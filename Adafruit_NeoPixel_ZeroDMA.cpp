@@ -157,7 +157,7 @@ bool Adafruit_NeoPixel_ZeroDMA::begin(SERCOM *sercom, Sercom *sercomBase,
       // conceivable that this could fail spectacularly on some unforseen
       // future device, if the SERCOM pad assignment becomes hardwarily
       // strict.)
-      spi = new SPIClass(sercom, mosi, mosi, mosi, padTX, SERCOM_RX_PAD_1);
+      spi = new SPIClassSAMD(sercom, mosi, mosi, mosi, padTX, SERCOM_RX_PAD_1);
     }
     if ((spi)) {
       spi->begin();

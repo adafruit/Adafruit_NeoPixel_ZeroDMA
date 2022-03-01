@@ -324,6 +324,17 @@ struct {
   &sercom4, SERCOM4, SERCOM4_DMAC_ID_TX, MOSI, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
 #endif // end Arduino Zero
 
+#if defined(USB_PID) && (USB_PID == 0x8057) // ARDUINO NANO 33 IOT
+  // SERCOM0 is the only one 100% in the clear; others overlap serial1/2,
+  // WiFi, Wire, etc.
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    4, SPI_PAD_3_SCK_1, PIO_SERCOM_ALT,
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    6, SPI_PAD_0_SCK_1, PIO_SERCOM_ALT,
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,    7, SPI_PAD_2_SCK_3, PIO_SERCOM_ALT,
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A2, SPI_PAD_3_SCK_1, PIO_SERCOM,
+  &sercom0, SERCOM0, SERCOM0_DMAC_ID_TX,   A3, SPI_PAD_2_SCK_3, PIO_SERCOM,
+  &sercom1, SERCOM1, SERCOM1_DMAC_ID_TX, MOSI, SPI_PAD_0_SCK_1, PIO_SERCOM,
+#endif // end Arduino NANO 33 IoT
+
 }; // end sercomTable[]
 
 #define N_SERCOMS (sizeof sercomTable / sizeof sercomTable[0])
