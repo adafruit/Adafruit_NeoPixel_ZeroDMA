@@ -1,70 +1,60 @@
-# Adafruit_NeoPixel_ZeroDMA
-DMA-based NeoPixel library for SAMD21 and SAMD51 microcontrollers
-(Feather M0, M4, etc.) Doesn't require stopping interrupts, so millis() and
-micros() don't lose time, soft PWM (for servos, etc.) still operate normally.
+# Adafruit_NeoPixel_SERCOM
 
-Requires LATEST Adafruit_NeoPixel and Adafruit_ZeroDMA libraries also be
-installed (Adafruit SAMD board support automatically includes
-Adafruit_ZeroDMA).
+Queued-SPI NeoPixel library for SAMD21, SAMD51, and SAME5x microcontrollers.
+Frames are encoded into a staging buffer and submitted through the core SPI
+queue. The active frame stays unchanged until its completion callback.
 
-THIS ONLY WORKS ON CERTAIN PINS. THIS IS NORMAL. Library uses SERCOM
-peripherals for SPI output, and the hardware only supports this on specific
-pins (plus, some SERCOMs are in use for Serial, I2C, etc.).
+Requires Adafruit_NeoPixel and Adafruit Zero DMA Library. SPI/SERCOM selects
+DMA or non-DMA transport internally; this library does not select or manage DMA.
+The core must provide the completion-callback SPI API proposed in
+[ArduinoCore-samd #395](https://github.com/adafruit/ArduinoCore-samd/pull/395).
+Stock cores without that API are not supported.
 
-AS OF VERSION 1.2.0: the selection of pins is more restrictive than before,
-to better avoid collisions with other peripherals (I2C, etc.)...with few
-exceptions, you can use DMA NeoPixels with impunity. And more boards are
-supported now.
+Include `<Adafruit_NeoPixel_SERCOM.h>` and construct an
+`Adafruit_NeoPixel_SERCOM` object. The repository URL retains its original name.
 
-COMPATIBLE BOARDS AND PINS:
+THIS ONLY WORKS ON CERTAIN PINS. THIS IS NORMAL.
 
-* Feather M0: pins 5, 6, 12 and MOSI\*.
-* Feather M0 Express: pins 6, 12 and MOSI\*.
-* Feather M4: pins 12, A2, A4 and MOSI\*.
-* ItsyBitsy M0: pins 5, 12 and MOSI\*.
-* ItsyBitsy M4: pins 2, 5, 12 and MOSI\*.
-* Metro M0 or Arduino Zero: pins 5, 12 and MOSI\*.
-* Metro M4: pins 6, 11, A3 and MOSI\*.
-* Metro M4 AirLift: pins 6, 11 and MOSI\*.
-* Grand Central: pins 11, 14, 23 and MOSI\*.
-* HalloWing M0: pins 4 (NEOPIX), 6 and MOSI\*.
-* HalloWing M4: pins 6, 8, A5 and MOSI\*.
-* MONSTER M4SK: pin 2.
-* PyPortal, PyPortal Titano: pin 3 (SENSE connector).
-* PyGamer, PyGamer Advance: pins 12 and A4.
-* PyBadge, PyBadge AirLift: pins A4, MOSI\*.
-* Crickit M0: pins 8, 11, A8 and A11.
-* Trellis M4: pin 10 (keypad NeoPixels).
-* Circuit Playground M0: pin A2.
-* Trinket M0: pin 4 (can't use simultaneously with I2C, SPI or Serial1).
-* Gemma M0: pin D0 (can't use simultaneously with I2C, SPI or Serial1).
-* QT Py: MOSI\* and pin 16 (underside pad, can't use w/optional SPI flash).
-* Arduino NANO 33 IoT: pins 4, 6, 7, A2, A3, MOSI*.
+This branch discovers pin support at runtime using the board's pin mux data and
+generated SAMD21/SAMD51/SAME5x SERCOM route tables. `begin()` succeeds only
+when the selected pin has a valid SERCOM MOSI route (SERCOM PAD 0, 2, or 3).
+If no compatible route exists, `begin()` returns `false`.
 
-\* If using the MOSI pin on these boards, the corresponding SPI peripheral is
-not usable. A few add-ons (usually TFT display shields/wings) rely on SPI,
-so avoid NeoPixeling from this pin in such situations. MOSI is really only
-offered anymore to maintain partial compatibility with older projects that
-might've used the earlier library, which was less selective about such things.
+If using a board's MOSI pin for NeoPixels, that SPI peripheral is not usable
+for other devices.
 
 OTHER THINGS TO KNOW:
 
-DMA NeoPixels use a LOT of RAM: 12 bytes/pixel for RGB, 16 bytes/pixel for
-RGBW, about 4X as much as regular NeoPixel library (plus a little bit extra
-for structures & stuff).
+Queued SPI NeoPixels use 21 bytes per RGB pixel or 28 bytes per RGBW pixel,
+plus 180 reset bytes. The base pixel buffer and two expanded frame buffers are
+kept at the same time.
 
 0/1 bit timing does not precisely match NeoPixel/WS2812/SK6812 datasheet
 specs, but it seems to work well enough. Use at your own peril.
 
-Have not tested this yet with multiple instances (DMA-driven NeoPixels on
-multiple pins), but in theory it should work. Should also be OK mixing DMA
-and non-DMA NeoPixels in same sketch (just use different constructor and
-pins for each).
+The selected SPI peripheral is dedicated to the strip. Calls to `show()`
+coalesce while a frame is active, so the newest pending frame follows it.
 
-Currently this only supports strip declaration with length & pin known at
-compile time, so it's not a 100% drop-in replacement for all NeoPixel code
-right now. But probably 99%+ of all sketches are written that way, so it's
-perfectly usable for most. The stock NeoPixel library has the option of
-setting the length & pin number at run-time (so these can be stored in a
-config file or in EEPROM)...but those functions are now considered
-deprecated, so we should be OK going forward.
+Length/pin/type can be provided at run time when constructing the strip
+object. What is not supported as a drop-in workflow is changing those values
+after `begin()` has initialized SPI resources.
+
+If your project needs configurable strip settings, construct a new
+Adafruit_NeoPixel_SERCOM instance with the desired values before calling
+`begin()`.
+
+## Verification
+
+CI runs the Python and native lifecycle checks and compiles `strandtest` for
+Adafruit Metro M0 and Metro M4 with both DMA and interrupt-driven SPI against
+the pinned Framework PR revision.
+It also checks C++ formatting with clang-format 18.1.8 and generates Doxygen
+output in `build/doxygen`.
+
+Run the same checks locally with
+`python extras/ci/run.py --framework <checkout> --base-ref upstream/master`.
+The base reference must identify the target branch of the pull request so the
+whitespace check covers the whole proposed change.
+The checkout must be at the revision recorded by the script. PlatformIO 6.1.19,
+clang-format 18.1.8, Doxygen, and Graphviz must be available on the command path; the script
+also accepts explicit `--pio`, `--clang-format`, and `--doxygen` paths.

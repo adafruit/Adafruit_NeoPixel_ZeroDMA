@@ -1,12 +1,12 @@
 #######################################
-# Syntax Coloring Map For Adafruit_NeoPixel_ZeroDMA
+# Syntax Coloring Map For Adafruit_NeoPixel_SERCOM
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 
-Adafruit_NeoPixel_ZeroDMA	KEYWORD1
+Adafruit_NeoPixel_SERCOM	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

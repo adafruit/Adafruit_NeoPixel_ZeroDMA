@@ -1,46 +1,33 @@
-// This is a PARED-DOWN NeoPixel example for the Adafruit_NeoPixel_ZeroDMA
+// This is a PARED-DOWN NeoPixel example for the Adafruit_NeoPixel_SERCOM
 // library, demonstrating pin declarations, etc.  For more complete examples
 // of NeoPixel operations, see the examples included with the 'regular'
 // Adafruit_NeoPixel library.
 
-// Also requires LATEST Adafruit_NeoPixel and Adafruit_ZeroDMA libraries.
+// Also requires LATEST Adafruit_NeoPixel and Adafruit_ZeroDMA libraries. SPI/SERCOM
+// selects DMA or non-DMA transport internally.
 
-#include <Adafruit_NeoPixel_ZeroDMA.h>
+#include <Adafruit_NeoPixel_SERCOM.h>
 
-/* DMA NeoPixels work ONLY on SPECIFIC PINS:
-   Feather M0: pins 5, 6, 12 and MOSI*.
-   Feather M0 Express: pins 6, 12 and MOSI*.
-   Feather M4: pins 12, A2, A4 and MOSI*.
-   ItsyBitsy M0: pins 5, 12 and MOSI*.
-   ItsyBitsy M4: pins 2, 5, 12 and MOSI*.
-   Metro M0 or Arduino Zero: pins 5, 12 and MOSI*.
-   Metro M4: pins 6, 11, A3 and MOSI*.
-   Metro M4 AirLift: pins 6, 11 and MOSI*.
-   Grand Central: pins 11, 14, 23 and MOSI*.
-   HalloWing M0: pins 4 (NEOPIX), 6 and MOSI*.
-   HalloWing M4: pins 6, 8, A5 and MOSI*.
-   MONSTER M4SK: pin 2.
-   PyPortal, PyPortal Titano: pin 3 (SENSE connector).
-   PyGamer, PyGamer Advance: pins 12 and A4.
-   PyBadge, PyBadge AirLift: pins A4, MOSI*.
-   Crickit M0: pins 8, 11, A8 and A11.
-   Trellis M4: pin 10 (keypad NeoPixels).
-   Circuit Playground M0: pin A2.
-   Trinket M0: pin 4 (can't use with I2C, SPI or Serial1 active).
-   Gemma M0: pin D0 (can't use with I2C, SPI or Serial1 active).
-   QT Py: MOSI* and pin 16 (underside pad, can't use w/optional SPI flash).
-   Arduino NANO 33 IoT: pins 4, 6, 7, A2, A3, MOSI*.
-   * If using the MOSI pin on these boards, the corresponding SPI
-     peripheral is not usable.
+/*
+  This branch discovers SERCOM routes at runtime. A pin works if the board's
+  variant data maps it to a valid SERCOM MOSI route (PAD 0, 2, or 3).
+
+  begin() returns false when a pin has no compatible route.
+
+  Note: If you use a board's MOSI pin, that SPI peripheral is not available
+  for other devices.
 */
 
 #define PIN        12
 #define NUM_PIXELS 30
 
-Adafruit_NeoPixel_ZeroDMA strip(NUM_PIXELS, PIN, NEO_GRB);
+Adafruit_NeoPixel_SERCOM strip(NUM_PIXELS, PIN, NEO_GRB);
 
 void setup() {
-  strip.begin();
+  if (!strip.begin())
+    while (1)
+      ;
+
   strip.setBrightness(32);
   strip.show();
 }
