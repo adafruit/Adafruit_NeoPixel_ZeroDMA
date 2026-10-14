@@ -40,6 +40,7 @@ COMPATIBLE BOARDS AND PINS:
 * Gemma M0: pin D0 (can't use simultaneously with I2C, SPI or Serial1).
 * QT Py: MOSI\* and pin 16 (underside pad, can't use w/optional SPI flash).
 * Arduino NANO 33 IoT: pins 4, 6, 7, A2, A3, MOSI*.
+* Arduino MKR WiFi 1010: pins 3 and 6.
 
 \* If using the MOSI pin on these boards, the corresponding SPI peripheral is
 not usable. A few add-ons (usually TFT display shields/wings) rely on SPI,
